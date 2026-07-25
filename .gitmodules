@@ -19,3 +19,6 @@
 [submodule "nodejs/juice-shop/app"]
 	path = nodejs/juice-shop/app
 	url = git@github.com:/bkimminich/juice-shop.git
+[submodule "php8"]
+	path = php8
+	url = https://github.com/peng-hui/witcher-php8.git
