@@ -1,12 +1,16 @@
-"""Load LLM runtime configuration from file and environment variables."""
+"""Load LLM runtime configuration from environment variables and .env files."""
 
-import json
 import os
 try:
     from dataclasses import dataclass
 except Exception:
     from compat_dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Dict, List, Optional
+
+try:
+    from common.app_config import load_symex_app_config
+except Exception:
+    from symex.common.app_config import load_symex_app_config
 
 
 @dataclass(frozen=True)
@@ -21,6 +25,17 @@ class LLMConfig:
     max_retries: int = 3
 
 
+_DEFAULTS = {
+    'base_url': 'https://api.openai.com/v1',
+    'api_key': '',
+    'model': 'gpt-5.4-mini',
+    'temperature': 0.2,
+    'timeout_s': 300.0,
+    'max_tokens': 8192,
+    'max_retries': 3,
+}
+
+
 def _norm_base_url(base_url: str) -> str:
     """Normalize a base URL to a stable form (no trailing '/')."""
     u = (base_url or '').strip()
@@ -29,58 +44,92 @@ def _norm_base_url(base_url: str) -> str:
     return u.rstrip('/')
 
 
+def _read_env_file(env_path: str) -> Dict[str, str]:
+    data: Dict[str, str] = {}
+    if not os.path.exists(env_path):
+        return data
+    with open(env_path, 'r', encoding='utf-8', errors='replace') as f:
+        for raw_line in f:
+            line = raw_line.strip()
+            if not line or line.startswith('#') or '=' not in line:
+                continue
+            key, value = line.split('=', 1)
+            data[key.strip()] = value.strip()
+    return data
+
+
+def _pick_env_value(name: str, env_file_values: Dict[str, str], aliases: Optional[List[str]] = None) -> Optional[str]:
+    names = [name]
+    if aliases:
+        names.extend(aliases)
+    for key in names:
+        value = os.environ.get(key)
+        if value is not None:
+            return value
+    for key in names:
+        value = env_file_values.get(key)
+        if value is not None:
+            return value
+    return None
+
+
+def _resolve_env_dirs(config_path: Optional[str] = None) -> List[str]:
+    candidates: List[str] = []
+    try:
+        cfg = load_symex_app_config(config_path=config_path)
+        cfg_path = str(getattr(cfg, 'config_path', '') or '').strip()
+        if cfg_path:
+            candidates.append(os.path.dirname(os.path.abspath(cfg_path)))
+    except Exception:
+        pass
+    if config_path:
+        candidates.append(os.path.dirname(os.path.abspath(config_path)))
+    seen = set()
+    ordered: List[str] = []
+    for path in candidates:
+        if not path:
+            continue
+        key = os.path.normcase(os.path.abspath(path))
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(os.path.abspath(path))
+    return ordered
+
+
 def load_llm_config(config_path: Optional[str] = None) -> LLMConfig:
     """
-    Load LLM config from JSON file and environment variables.
+    Load LLM config from environment variables and nearby .env files.
 
     Precedence:
-    - explicit `config_path`
-    - `JOERNTRACE_LLM_CONFIG`
-    - `llm_config.json` next to this module
-    - environment overrides: `OPENAI_*` or `JOERNTRACE_LLM_*`
+    - process environment variables
+    - `.env` in the resolved runtime config directory
+    - built-in defaults
     """
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    cfg_path = (
-        config_path
-        or os.environ.get('JOERNTRACE_LLM_CONFIG')
-        or os.path.join(base_dir, 'llm_config.json')
-    )
-    if not os.path.exists(cfg_path):
-        alt_path = os.path.join(os.path.dirname(base_dir), 'llm_config.json')
-        if os.path.exists(alt_path):
-            cfg_path = alt_path
+    env_dirs = _resolve_env_dirs(config_path)
+    env_file_values: Dict[str, str] = {}
+    for cfg_dir in env_dirs:
+        env_path = os.path.join(cfg_dir, '.env')
+        env_file_values.update(_read_env_file(env_path))
 
-    obj: Dict[str, Any] = {}
-    if os.path.exists(cfg_path):
-        with open(cfg_path, 'r', encoding='utf-8', errors='replace') as f:
-            loaded = json.load(f)
-            if isinstance(loaded, dict):
-                obj = loaded
+    base_url = _norm_base_url(str(_pick_env_value('BASE_URL', env_file_values, ['OPENAI_BASE_URL', 'JOERNTRACE_LLM_BASE_URL']) or _DEFAULTS['base_url']).strip())
+    api_key = str(_pick_env_value('API_KEY', env_file_values, ['OPENAI_API_KEY', 'JOERNTRACE_LLM_API_KEY']) or _DEFAULTS['api_key']).strip()
+    model = str(_pick_env_value('MODEL', env_file_values, ['OPENAI_MODEL', 'JOERNTRACE_LLM_MODEL']) or _DEFAULTS['model']).strip()
 
-    env_base_url = os.environ.get('OPENAI_BASE_URL') or os.environ.get('JOERNTRACE_LLM_BASE_URL')
-    env_api_key = os.environ.get('OPENAI_API_KEY') or os.environ.get('JOERNTRACE_LLM_API_KEY')
-    env_model = os.environ.get('OPENAI_MODEL') or os.environ.get('JOERNTRACE_LLM_MODEL')
+    temperature = _pick_env_value('TEMPERATURE', env_file_values)
+    timeout_s = _pick_env_value('TIMEOUT_S', env_file_values)
+    max_tokens = _pick_env_value('MAX_TOKENS', env_file_values)
+    max_retries = _pick_env_value('MAX_RETRIES', env_file_values)
 
-    base_url = _norm_base_url(str(env_base_url or obj.get('base_url') or '').strip())
-    api_key = str(env_api_key or obj.get('api_key') or '').strip()
-    model = str(env_model or obj.get('model') or '').strip()
-
-    temperature = obj.get('temperature')
-    timeout_s = obj.get('timeout_s')
-    max_tokens = obj.get('max_tokens')
-    max_retries = obj.get('max_retries')
-
-    temperature_f = float(temperature) if temperature is not None else 0.0
-    timeout_f = float(timeout_s) if timeout_s is not None else 60.0
-    max_tokens_i = int(max_tokens) if max_tokens is not None else None
-    max_retries_i = int(max_retries) if max_retries is not None else 3
+    temperature_f = float(temperature) if temperature not in (None, '') else float(_DEFAULTS['temperature'])
+    timeout_f = float(timeout_s) if timeout_s not in (None, '') else float(_DEFAULTS['timeout_s'])
+    max_tokens_i = int(max_tokens) if max_tokens not in (None, '') else int(_DEFAULTS['max_tokens'])
+    max_retries_i = int(max_retries) if max_retries not in (None, '') else int(_DEFAULTS['max_retries'])
 
     if not base_url:
-        raise ValueError(f'missing base_url (config: {cfg_path})')
-    if not api_key:
-        raise ValueError(f'missing api_key (config: {cfg_path})')
+        raise ValueError('missing base_url')
     if not model:
-        raise ValueError(f'missing model (config: {cfg_path})')
+        raise ValueError('missing model')
 
     return LLMConfig(
         base_url=base_url,

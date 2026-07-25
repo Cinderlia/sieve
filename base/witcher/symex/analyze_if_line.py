@@ -10,6 +10,7 @@ This script:
 import os
 import sys
 import json
+import copy
 import base64
 import atexit
 import bisect
@@ -1094,83 +1095,78 @@ def _solution_change_markers(solution: dict, *, defaults: Optional[dict]) -> Lis
     file_uploads = _solution_file_uploads(solution)
     file_path_payloads = _solution_file_path_payloads(solution)
 
-    def _block_has_non_file_change(block_name: str, *, cookie_mode: bool) -> bool:
+    def _block_markers(block_name: str) -> Tuple[bool, bool]:
         if block_name not in norm:
-            return False
+            return False, False
         raw_block = norm.get(block_name)
-        if not isinstance(raw_block, dict):
-            effective_value = _effective_request_field(norm, block_name, defaults=defaults, cookie_mode=cookie_mode)
-            return str(effective_value or "") != str((defaults or {}).get(block_name) or "")
-        filtered_block = {}
-        for raw_key, raw_value in raw_block.items():
-            key_s = str(raw_key or "").strip()
-            if not key_s:
-                continue
-            if str(raw_value or "") == _WITCHER_FILE_UPLOAD_MARKER and key_s in file_uploads:
-                continue
-            if isinstance(raw_value, str) and raw_value.startswith(_WITCHER_FILE_PATH_PREFIX):
-                payload_key = raw_value[len(_WITCHER_FILE_PATH_PREFIX):].strip()
-                if payload_key and payload_key in file_path_payloads:
-                    continue
-            filtered_block[key_s] = raw_value
-        if not filtered_block:
-            return False
-        temp_solution = dict(solution)
-        temp_solution[block_name] = filtered_block
-        temp_norm = _normalize_solution_keys(temp_solution)
-        effective_value = _effective_request_field(temp_norm, block_name, defaults=defaults, cookie_mode=cookie_mode)
-        return str(effective_value or "") != str((defaults or {}).get(block_name) or "")
-
-    if _block_has_non_file_change("COOKIE", cookie_mode=True):
-        out.append("COOKIE")
-    if _block_has_non_file_change("GET", cookie_mode=False):
-        out.append("GET")
-    if _block_has_non_file_change("POST", cookie_mode=False):
-        out.append("POST")
-
-    if "SESSION" in norm:
-        session_block = norm.get("SESSION")
-        if not isinstance(session_block, dict):
-            out.append("SESSION")
-        else:
-            filtered_session = {}
-            for raw_key, raw_value in session_block.items():
+        has_non_placeholder = False
+        has_placeholder = False
+        if isinstance(raw_block, dict):
+            for raw_key, raw_value in raw_block.items():
                 key_s = str(raw_key or "").strip()
                 if not key_s:
                     continue
                 if str(raw_value or "") == _WITCHER_FILE_UPLOAD_MARKER and key_s in file_uploads:
+                    has_placeholder = True
                     continue
                 if isinstance(raw_value, str) and raw_value.startswith(_WITCHER_FILE_PATH_PREFIX):
                     payload_key = raw_value[len(_WITCHER_FILE_PATH_PREFIX):].strip()
                     if payload_key and payload_key in file_path_payloads:
+                        has_placeholder = True
                         continue
-                filtered_session[key_s] = raw_value
-            if filtered_session:
-                out.append("SESSION")
+                has_non_placeholder = True
+            return has_non_placeholder, has_placeholder
+        if raw_block is None:
+            return False, False
+        if isinstance(raw_block, str):
+            raw_text = raw_block.strip()
+            if not raw_text:
+                return False, False
+            if is_delete_sentinel(raw_text):
+                return True, False
+        return True, False
 
-    if _env_change_map_from_solution(norm, defaults=defaults):
-        out.append("ENV")
-    if file_uploads or file_path_payloads:
+    cookie_non_placeholder, cookie_has_placeholder = _block_markers("COOKIE")
+    get_non_placeholder, get_has_placeholder = _block_markers("GET")
+    post_non_placeholder, post_has_placeholder = _block_markers("POST")
+    session_non_placeholder, session_has_placeholder = _block_markers("SESSION")
+
+    if cookie_non_placeholder:
+        out.append("COOKIE")
+    if get_non_placeholder:
+        out.append("GET")
+    if post_non_placeholder:
+        out.append("POST")
+    if session_non_placeholder:
+        out.append("SESSION")
+
+    if "ENV" in norm:
+        env_block = norm.get("ENV")
+        if env_block is not None:
+            if isinstance(env_block, dict):
+                if env_block:
+                    out.append("ENV")
+            elif isinstance(env_block, str):
+                if env_block.strip():
+                    out.append("ENV")
+            else:
+                out.append("ENV")
+
+    if file_uploads or file_path_payloads or cookie_has_placeholder or get_has_placeholder or post_has_placeholder:
         out.append("FILE")
-    sql_value = norm.get("SQL")
-    if isinstance(sql_value, str) and sql_value.strip():
+
+    if any(key in norm for key in ("SQL", "DB_REQUEST", "DB_QUERY", "DBREQUEST")):
         out.append("SQL")
-    elif isinstance(sql_value, (list, tuple)):
-        for item in sql_value:
-            if isinstance(item, str) and item.strip():
-                out.append("SQL")
-                break
-            if isinstance(item, dict) and str(item.get("sql") or "").strip():
-                out.append("SQL")
-                break
+
     return out
 
 
-def _build_external_seed_name(*, external_seed_id: int, seq: int, solution_index: int, solution: dict, defaults: Optional[dict], seed_kind_flags: Optional[Dict[str, bool]] = None) -> str:
+def _build_external_seed_name(*, external_seed_id: int, seq: int, solution_index: int, solution: dict, defaults: Optional[dict], seed_kind_flags: Optional[Dict[str, bool]] = None, original_solution: Optional[dict] = None) -> str:
     parent_seed_info = _resolve_parent_seed_id_info()
     parent_seed_id = str(parent_seed_info.get("resolved_parent_seed_id_text") or parent_seed_info.get("resolved_parent_seed_id") or "unknown")
     source_fuzzer = str(parent_seed_info.get("resolved_source_fuzzer") or "unknown")
-    markers = _seed_mods_from_solution(solution, defaults=defaults, seed_kind_flags=seed_kind_flags)
+    mods_solution = original_solution if isinstance(original_solution, dict) else solution
+    markers = _seed_mods_from_solution(mods_solution, defaults=defaults, seed_kind_flags=seed_kind_flags)
     mods = "+".join(markers) if markers else "NONE"
     parts = [
         "id:%06d" % int(external_seed_id),
@@ -1622,7 +1618,7 @@ def _materialize_solution_file_payloads(
     logger: Optional[Logger],
     solution_index: int,
 ) -> Tuple[Dict[str, object], List[str]]:
-    sol2: Dict[str, object] = dict(solution) if isinstance(solution, dict) else {}
+    sol2: Dict[str, object] = _normalize_solution_keys(solution) if isinstance(solution, dict) else {}
     created_paths: List[str] = []
     file_uploads = _solution_file_uploads(sol2)
     file_path_payloads = _solution_file_path_payloads(sol2)
@@ -2024,13 +2020,14 @@ def _write_external_seeds_from_solutions(
     seed_records: List[Dict[str, object]] = []
     wrote: List[str] = []
     for i, sol in enumerate(solutions or []):
+        original_solution_snapshot = copy.deepcopy(sol) if isinstance(sol, dict) else {}
         if logger is not None:
             try:
                 logger.info(
                     "external_seed_solution_start",
                     seq=int(seq),
                     solution_index=int(i),
-                    solution_keys=sorted([str(k) for k in sol.keys()]) if isinstance(sol, dict) else [],
+                    solution_keys=sorted([str(k) for k in original_solution_snapshot.keys()]) if isinstance(original_solution_snapshot, dict) else [],
                     out_dir=out_dir,
                 )
             except Exception:
@@ -2048,8 +2045,8 @@ def _write_external_seeds_from_solutions(
                 except Exception:
                     pass
             continue
-        env_marker_map = _env_change_map_from_solution(sol if isinstance(sol, dict) else {}, defaults=current_defaults) if env_enabled else {}
-        effective_env_map = _apply_env_solution_to_defaults(sol if isinstance(sol, dict) else {}, defaults=current_defaults) if env_enabled else _env_defaults_to_map(defaults)
+        env_marker_map = _env_change_map_from_solution(original_solution_snapshot, defaults=current_defaults) if env_enabled else {}
+        effective_env_map = _apply_env_solution_to_defaults(original_solution_snapshot, defaults=current_defaults) if env_enabled else _env_defaults_to_map(defaults)
         env_change_map = _diff_env_maps(_env_defaults_to_map(defaults), effective_env_map) if env_enabled else {}
         env_id = ("%06d" % int(sid)) if env_change_map else ""
         if logger is not None:
@@ -2066,7 +2063,7 @@ def _write_external_seeds_from_solutions(
             except Exception:
                 pass
         sol2, sess_file_path, created_file_paths = _prepare_solution_for_seed(
-            sol,
+            copy.deepcopy(original_solution_snapshot),
             cfg=cfg,
             seq=int(seq),
             external_seed_id=int(sid),
@@ -2144,6 +2141,7 @@ def _write_external_seeds_from_solutions(
             solution=sol2,
             defaults=current_defaults,
             seed_kind_flags=seed_kind_flags,
+            original_solution=original_solution_snapshot,
         )
         if logger is not None:
             try:
@@ -2223,7 +2221,7 @@ def _write_external_seeds_from_solutions(
                 "seed_id": int(sid),
                 "seed_path": str(out_path or ""),
                 "seed_name": str(name or ""),
-                "mods": _seed_mods_from_solution(sol2, defaults=current_defaults, seed_kind_flags=seed_kind_flags),
+                "mods": _seed_mods_from_solution(original_solution_snapshot, defaults=current_defaults, seed_kind_flags=seed_kind_flags),
             }
         )
         if logger is not None:
