@@ -56,13 +56,19 @@ def _resolve_config_path(base: str, root: str, repo_root: str, config_path: Opti
     if req:
         primary = os.path.abspath(req)
         candidates.append(primary)
+        folder = os.path.dirname(primary)
         name = os.path.basename(primary).lower()
         if name == "config.json":
-            candidates.append(os.path.join(os.path.dirname(primary), "symex_config.json"))
+            candidates.append(os.path.join(folder, "sieve_config.json"))
+            candidates.append(os.path.join(folder, "symex_config.json"))
+        elif name == "sieve_config.json":
+            candidates.append(os.path.join(folder, "symex_config.json"))
+            candidates.append(os.path.join(folder, "config.json"))
         elif name == "symex_config.json":
-            candidates.append(os.path.join(os.path.dirname(primary), "config.json"))
+            candidates.append(os.path.join(folder, "config.json"))
     else:
         for folder in (repo_root, root, base):
+            candidates.append(os.path.join(folder, "sieve_config.json"))
             candidates.append(os.path.join(folder, "symex_config.json"))
             candidates.append(os.path.join(folder, "config.json"))
     seen = set()

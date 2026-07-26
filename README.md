@@ -1,146 +1,207 @@
-# Witcher
+# Sieve
 
-This repo contains the source code for Witcher a web application fuzzer that utilizes mutational fuzzing 
-to explore web applications and fault escalation to detect command and SQL injection vulnerabilities.
+Sieve, formerly named SymEx, is a hybrid fuzzing tool built on top of Witcher. It extends and improves the original Witcher workflow and adds a symbolic-execution component to support tighter cooperation between fuzzing and program analysis.
 
-Witcher is to be published in S&P in May 2023.
-@inproceedings{trickelwitcher,
-  title={Toss a fault to your witcher: Applying grey-box coverage-guided mutational fuzzing to detect sql and command injection vulnerabilities},
-  author={Trickel, Erik and Pagani, Fabio and Zhu, Chang and Dresel, Lukas and Vigna, Giovanni and Kruegel, Christopher and Wang, Ruoyu and Bao, Tiffany and Shoshitaishvili, Yan and Doup{\'e}, Adam},
-  booktitle={IEEE Symposium on Security and Privacy (SP), to appear},
-  pages={116--133},
-  year={2023}
-}
+Witcher remains the foundation of the runtime and fuzzing pipeline, while Sieve is the primary system in this repository and the main focus of this documentation.
 
+Sieve currently targets PHP 7 and 8, with future support for other languages.
 
-This repo relies on submodules
-`git submodule update --init --recursive`
+## Workflow Overview
 
+1. Start and prepare the target server inside the container.
+2. Create a working directory for config files and generated artifacts.
+3. Configure `witcher_config.json`.
+4. Configure `initial_url_config.json`.
+5. Run the initial URL discovery and optional crawler stage.
+6. Generate AST files and place them under `AST/`.
+7. Configure `sieve_config.json` or `symex_config.json`.
+8. Start Witcher with the Sieve/SymEx-enabled test profile.
 
-The best way to utilize Witcher is to build the base docker containers and use them as the foundation for the web application container to be tested.
+## Environment Preparation
 
-To get started, run `docker/build-all.sh`
+Run the following commands in the container:
 
-Once completed, the script will have built all of Witcher's base containers. 
-- witcher/php5run
-- witcher/php7run
-- witcher/python
-- witcher/java
-- witcher/nodejs
-- witcher/ruby
+```bash
+# Start services
+service apache2 start
+mysqld --daemonize
 
-When building the target web application, use one of the above containers in conjunction with the `FROM` field in the application's docker build file.
+# Scheduler settings
+echo 1 > /proc/sys/kernel/sched_child_runs_first
+echo core > /proc/sys/kernel/core_pattern
 
-Currently, PHP 5 and 7 fuzz the application by accessing the PHP application via CGI. Whereas, Witcher fuzzes python, java, nodejs, and ruby using the target web application's interface.
+# CPU performance mode
+for fn in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
+  echo performance > "$fn"
+done
 
-This repository contains Witcher's source code, the scripts used to evaluate Witcher are available at https://github.com/sefcom/Witcher-experiment 
-
-# Building Basic Docker Containers
-
-
-To start, we suggest setting up a directory structure similar to what was done for the evaluation (See [Hospital Management](https://github.com/sefcom/Witcher-experiment/tree/main/interpreter-targets/openemr)). 
-In general, create a folder for the web application where the Dockerfile and source code will reside.
-Next, create a folder for configuration and results (e.g.,`user`), inside the new folder create a file named `witcher_config.json`
-The new folder will be mapped to Witcher's container at run time so that the results are saved to your local drive.
-
-`docker build --build-arg USE_INSTRUMENTED=1 -t openemr-user`
-
-# Pulling the containers
-
-The completely built containers exists on hub.docker, which can be pulled via the witcherfuzz user.
-```docker pull witcherfuzz/php5run
-docker pull witcherfuzz/php7run
-docker pull witcherfuzz/python
-docker pull witcherfuzz/java
-docker pull witcherfuzz/nodejs
-docker pull witcherfuzz/ruby
+# Set display
+export DISPLAY=:0
 ```
 
+## Prepare a Working Directory
 
+Create a directory to store configuration files and generated artifacts.
 
-## Witcher Config File
+Typical files created or used in this directory include:
 
-The Witcher Config File, `witcher_config.json` should be created in the 
+- `witcher_config.json`
+- `initial_url_config.json`
+- `request_data.json`
+- `AST/`
+- fuzzing outputs produced by Witcher
 
-- afl_preload is location of cgi wrapper for PHP and CGI web applications
-- number_of_refuzzes is the number of times page will be fuzzed within a single trial, more than one encourages page to page interactions
-- timeout in seconds
-- script_skip_list - scripts to skip testing of
-- script_random_order - 0: no randomization, 1: randomize order every trial, 2: randomize for refuzzes
-- script_start/end_index - used to split up large script list for large web applications  
-- cores - the number of cores to use for fuzzing.
-- request_crawler - config data used for running the crawler
-- direct - direct login information, used before creating the fuzzer instance to setup a login session
-```
-{
-  "testname": "name of test",
-  "afl_inst_interpreter_binary": "location of intrepreter with AFL instrumentation",
-  "wc_inst_interpreter_binary": "path to intrepreter with Witcher instruemtnation",
-  "base_url": "http://localhost/",
-  "afl_path": "/afl",
-  "ld_library_path":"/wclibs",
-  "afl_preload":"/wclibs/lib_db_fault_escalator.so",
-  "number_of_refuzzes": 3,
-  "timeout" : 28800,
-  "script_skip_list": ["test_5"],
-  "script_random_order": 1,
-  "script_start_index": 10,
-  "script_end_index": 20,
-  "cores": 3,
-  "request_crawler": {
-    "form_url" : "http://localhost/interface/login/login.php?site=default",
-    "usernameSelector": "#authUser",
-    "usernameValue": "admin",
-    "passwordSelector": "#clearPass",
-    "passwordValue": "password",
-    "submitType": "enter",
-    "positiveLoginMessage": "title=\"Current user\"",
-    "method": "POST",
-    "form_selector": ".form-login",
-    "form_submit_selector": "input[type=submit]",
-    "ignoreValues": [],
-    "urlUniqueIfValueUnique": []
-  },
+## Configure Witcher
 
-  "direct":{
-    "url": "http://localhost/interface/main/main_screen.php",
-       "postData": "new_login_session_management=1&authProvider=TroubleMaker&authUser=admin&clearPass=password&languageChoice=1",
-    "getData": "auth=login&site=default",
-    "positiveHeaders": [{"Location":"/interface/main/tabs/main.php"}],
-    "positiveBody": "",
-    "method": "POST",
-    "cgiBinary": "/php/php-cgi-mysqli-wc",
-    "loginSessionCookie" : "OpenEMR",
-    "mandatoryGet": "",
-    "extra_authorized_requests": [{"url": "http://localhost/interface/patient_file/summary/demographics.php?set_pid=2"}]
-  }
+Create and edit `witcher_config.json` in the working directory.
 
-}
+A full field-by-field reference is provided in [witcher_config.md](./config_docs/witcher_config.md).
+
+## Configure Initial URL Discovery
+
+Create and edit `initial_url_config.json` in the working directory. The remaining options now control behavior only; output filenames are fixed and no longer user-configurable. Intermediate initial URL state and parameter data are stored in `initial_urls.json`.
+
+A full field-by-field reference is provided in [initial_url_config.md](./config_docs/initial_url_config.md).
+
+## Run the Modified Crawler
+
+Run the following command to execute the modified initial URL pipeline. If the server does not provide a graphical environment, keep `--xvfb` enabled.
+
+```bash
+python3 /helpers/initial_url/main.py http://127.0.0.1/dvwa/ ./ /app/dvwa/ --start-crawler --no-headless --timeout 4h --xvfb
 ```
 
+### Positional Arguments
 
-## Fuzzing the application
+1. `http://127.0.0.1/dvwa/`
+   - `base_url`
+   - Base URL of the target web application.
+2. `./`
+   - `base_appdir`
+   - Working directory that contains configuration files and receives generated outputs.
+3. `/app/dvwa/`
+   - `source_dir`
+   - Source-code directory of the target application.
 
-For the experiments, a bash [script](https://github.com/sefcom/Witcher-experiment/blob/main/scripts/run_single_experiment.sh) was used to configure the container and directories and run the fuzzer. 
+### Optional Arguments
 
-`docker run -id --rm --privileged --shm-size=1G -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  --name openerm-user -v openemr:/openemr -v openemr/user:/tmp/coverages ${docker_image_name}`
+- `--max-file-bytes`
+  - Default: `5242880` (5 MiB)
+  - Maximum source-file size considered by code scanning and parameter scanning.
+- `--config`
+  - Default: `initial_url_config.json`
+  - Config file name resolved relative to the working directory.
+- `--start-crawler`
+  - Default: disabled
+  - Starts the request crawler after initial URL and parameter preparation.
+  - Equivalent to setting `crawler.start=true` in `initial_url_config.json`.
+- `--no-headless`
+  - Default: disabled at CLI level; config default is `false`
+  - Runs the crawler with a visible browser instead of headless mode.
+  - Overrides `crawler.no_headless` to `true`.
+- `--xvfb`
+  - Default: disabled at CLI level; config default is `true`
+  - Forces crawler startup through Xvfb.
+  - Useful on servers without a desktop session.
+  - Overrides `crawler.xvfb` to `true`.
+- `--timeout`
+  - Default: empty at CLI level; config default is `4h`
+  - Timeout passed to the crawler command.
+  - Overrides `crawler.timeout`.
 
-`docker exec -it -w /helpers/request_crawler/  openemr touch /tmp/start_test.dat`
+### What the Initial URL Pipeline Produces
 
-### Running the Request Crawler
+The pipeline now keeps only the required files:
 
-`docker exec -it -w /helpers/request_crawler/ -u wc  openemr bash -i'"'timeout --signal KILL $(( 4 * 60 * 60 ))s  node main.js request_crawler http://localhost /openemr/user --no-headless >> openemr/user/crawler.log '"'`
-
-### Running the fuzzer
-
-`docker exec -it openemr/user bash -c "echo 1 >/proc/sys/kernel/sched_child_runs_first && echo core > /proc/sys/kernel/core_pattern";`
-`docker exec -it openemr/user bash -c 'for fn in /sys/devices/system/cpu/cpu*/cpufreq/scaling_gov*; do echo performance > $fn; done'`
-
-`docker exec -it opeemr/user bash -i -c 'cd /app; chown wc:www-data -R .; chmod o+r . -R;if [ -d /var/instr/ ]; then chmod 666 -R /var/instr/*; fi`
-
-`docker exec -it -w "openemr" -u wc openemr/user bash -i -c "p --testver WICHR `
-
-After completing the last command, the fuzzer should start with results being printed to the terminal.
+- `initial_urls.txt`
+- `initial_urls.json`
+- `request_data.json`
+- `afl_request_data.json`
 
 
+## Generate AST Files
 
+Create an `AST` directory inside the working directory, then generate AST data for the target application.
+
+Generate `nodes.csv` and `rels.csv`:
+
+```bash
+~/phpjoern/php2ast -n nodes.csv -r rels.csv /app/dvwa
+```
+
+Generate `cpg_edges.csv`:
+
+```bash
+~/joern/phpast2cpg nodes.csv rels.csv
+```
+
+Place all three files under `AST/`:
+
+- `nodes.csv`
+- `rels.csv`
+- `cpg_edges.csv`
+
+
+## Configure Sieve / SymEx
+
+Create `sieve_config.json` or `symex_config.json` in the working directory.
+
+The code treats these names as interchangeable and resolves either one as the active SymEx config.
+
+A full field-by-field reference is provided in [symex_config.md](./config_docs/symex_config.md).
+
+## Configure LLM Access
+
+The LLM configuration is loaded from environment variables or a `.env` file placed in the same working directory as the active runtime config files.
+
+Typical `.env` keys include:
+
+```env
+API_KEY=your_api_key
+BASE_URL=https://api.openai.com/v1
+MODEL=gpt-5.4-mini
+TEMPERATURE=0.2
+TIMEOUT_S=300
+MAX_TOKENS=8192
+MAX_RETRIES=3
+```
+
+## Start Witcher
+
+Start Witcher with:
+
+```bash
+p --testver sieve
+```
+
+Notes:
+
+- The command-line entry point accepts the test location, test profile, timeout, and other runtime options. 
+- The `sieve`/`symex` flow is enabled together with Witcher for the corresponding test profile in this project’s environment.
+- The main fuzzing timeout defaults to `3600` seconds at CLI level unless overridden by `witcher_config.json` or command-line flags.
+
+## Coverage Collection
+
+Start recording coverage files:
+
+```bash
+touch /tmp/start_test.dat
+```
+
+Coverage files are generated under `/dev/shm/coverages`.
+
+Merge the coverage files:
+
+```bash
+python3 /codecov_conversion.py
+```
+
+Merged coverage output is generated under `/tmp/coverages`.
+
+## Configuration Reference Files
+
+Detailed configuration references are available under [config_docs](./config_docs):
+
+- [witcher_config.md](./config_docs/witcher_config.md)
+- [initial_url_config.md](./config_docs/initial_url_config.md)
+- [symex_config.md](./config_docs/symex_config.md)

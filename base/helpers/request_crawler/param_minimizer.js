@@ -12,7 +12,6 @@ function parseArgs(argv){
     let args = argv.slice(2);
     let headless = true;
     let acceptFullParamsWithoutMinimization = false;
-    let fullParamsOutput = "";
     args = args.filter((a) => {
         if (a === "--no-headless"){
             headless = false;
@@ -24,23 +23,11 @@ function parseArgs(argv){
         }
         return true;
     });
-    let nextArgs = [];
-    for (let i = 0; i < args.length; i++){
-        if (args[i] === "--full-params-output"){
-            if (i + 1 < args.length){
-                fullParamsOutput = args[i + 1];
-                i += 1;
-            }
-            continue;
-        }
-        nextArgs.push(args[i]);
-    }
-    args = nextArgs;
     if (args.length > 0 && (args[0] === "request_crawler" || args[0] === "request-crawler")){
         args = args.slice(1);
     }
     if (args.length < 4){
-        console.log("Usage:\n\tnode param_minimizer.js [request_crawler] BASE_SITE BASE_APPDIR URLS_TXT PARAMS_JSON [--no-headless] [--accept-full-params-without-minimization] [--full-params-output PATH]\n");
+        console.log("Usage:\n\tnode param_minimizer.js [request_crawler] BASE_SITE BASE_APPDIR URLS_TXT PARAMS_JSON [--no-headless] [--accept-full-params-without-minimization]\n");
         process.exit(2);
     }
     return {
@@ -50,7 +37,6 @@ function parseArgs(argv){
         paramsJson: args[3],
         headless,
         acceptFullParamsWithoutMinimization,
-        fullParamsOutput,
     };
 }
 
@@ -827,18 +813,28 @@ function ensureAflRequestData(baseAppdir){
 }
 
 function ensurePmProgress(baseAppdir){
-    let fn = path.join(baseAppdir, "param_minimizer_progress.json");
-    if (!fs.existsSync(fn)){
-        return {fn, data:{completed:{}}};
+    let fn = path.join(baseAppdir, "initial_urls.json");
+    let data = {};
+    if (fs.existsSync(fn)){
+        try{
+            data = JSON.parse(fs.readFileSync(fn, "utf8"));
+        } catch(ex){
+            data = {};
+        }
     }
-    let data = JSON.parse(fs.readFileSync(fn, "utf8"));
     if (!data || typeof data !== "object"){
         data = {};
     }
-    if (!data.completed || typeof data.completed !== "object"){
-        data.completed = {};
+    if (!data._meta || typeof data._meta !== "object"){
+        data._meta = {};
     }
-    return {fn, data};
+    if (!data._meta.param_minimizer || typeof data._meta.param_minimizer !== "object"){
+        data._meta.param_minimizer = {};
+    }
+    if (!data._meta.param_minimizer.completed || typeof data._meta.param_minimizer.completed !== "object"){
+        data._meta.param_minimizer.completed = {};
+    }
+    return {fn, data, progress:data._meta.param_minimizer};
 }
 
 function markPmProgress(progressObj, url, status, error, location, debug){
@@ -985,7 +981,7 @@ async function main(){
     page.__phase = "minimize";
 
     let {fn, data} = ensureAflRequestData(cfg.baseAppdir);
-    let {fn: progressFn, data: progressData} = ensurePmProgress(cfg.baseAppdir);
+    let {fn: progressFn, data: progressFileData, progress: progressData} = ensurePmProgress(cfg.baseAppdir);
     let reqs = data.requestsFound;
     let nid = nextId(reqs);
 
@@ -1004,7 +1000,6 @@ async function main(){
     let skipCount = 0;
     let resumeSkipCount = 0;
     let idx = 0;
-    let fullParamAcceptedUrls = [];
     
     let isReloggingIn = false;
     let loginRetryCount = 0;
@@ -1228,7 +1223,6 @@ async function main(){
                 }
             }, "GET", baseUrl, "", "");
             markPmProgress(progressData, baseUrl, `pre-${staticSkip.reason}`, "", undefined, debug);
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
             console.log(`[PM] skip url=${baseUrl} reason=${staticSkip.reason} status=0 err= ms=${Date.now() - t0}`);
             return;
         }
@@ -1248,7 +1242,6 @@ async function main(){
             if (wasAdded) added += 1;
             console.log(`[PM] add url=${baseUrl} method=GET get=0 post=0 cookie=0 keepReason=pass-without-params ms=${Date.now() - t0}`);
             markPmProgress(progressData, baseUrl, "add");
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
             return;
         }
         
@@ -1257,7 +1250,6 @@ async function main(){
             const loc = noParamPre.headers && noParamPre.headers.location ? noParamPre.headers.location : undefined;
             const debug = await buildProgressDebug(noParamPre, "GET", baseUrl, "", baseCookieHeader);
             markPmProgress(progressData, baseUrl, `pre-${noParamPre.reason}`, noParamPre.error, loc, debug);
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
             console.log(`[PM] skip url=${baseUrl} reason=${noParamPre.reason} status=${noParamPre.status || 0} err=${noParamPre.error || ""} ms=${Date.now() - t0}`);
             return;
         }
@@ -1282,7 +1274,7 @@ async function main(){
             skipCount += 1;
             const debug = await buildProgressDebug(noParamPre, "GET", baseUrl, "", baseCookieHeader);
             markPmProgress(progressData, baseUrl, `skip-${noParamPre.reason || "no-params-and-no-value"}`, noParamPre.error, undefined, debug);
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
+            fs.writeFileSync(progressFn, JSON.stringify(progressFileData, null, 2));
             console.log(`[PM] skip url=${baseUrl} reason=${noParamPre.reason || "no-params-and-no-value"} status=${noParamPre.status || 0} err=${noParamPre.error || ""} ms=${Date.now() - t0}`);
             return;
         }
@@ -1308,7 +1300,6 @@ async function main(){
             const loc = fullPre.headers && fullPre.headers.location ? fullPre.headers.location : undefined;
             const debug = await buildProgressDebug(fullPre, fullMethod, fullUrl, fullPostData, fullCookieHeader);
             markPmProgress(progressData, baseUrl, `pre-full-${fullPre.reason}`, fullPre.error, loc, debug);
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
             console.log(`[PM] skip url=${baseUrl} reason=full-${fullPre.reason} status=${fullPre.status || 0} err=${fullPre.error || ""} ms=${Date.now() - t0}`);
             return;
         }
@@ -1341,7 +1332,6 @@ async function main(){
                 }
             }, Object.keys(curPost).length > 0 ? "POST" : "GET", buildUrlWithGet(baseUrl, curGet), buildPostBody(curPost), cookieHeader);
             markPmProgress(progressData, baseUrl, `skip-${min.keepReason || "base-not-valuable-or-not-ok"}`, min.error || "", undefined, debug);
-            fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
             console.log(`[PM] skip url=${baseUrl} reason=${min.keepReason || "base-not-valuable-or-not-ok"} status=${min.status || 0} err=${min.error || ""} ms=${Date.now() - t0}`);
             return;
         }
@@ -1358,7 +1348,7 @@ async function main(){
         console.log(`[PM] add url=${baseUrl} method=${method} get=${Object.keys(finalMin.getParams).length} post=${Object.keys(finalMin.postParams).length} cookie=${Object.keys(finalMin.cookieParams).length} keepReason=${finalMin.keepReason || "-"} ms=${Date.now() - t0}`);
         data.inputSet = addInputSetForParams(data.inputSet, finalMin.getParams, finalMin.postParams, finalMin.cookieParams);
         markPmProgress(progressData, baseUrl, "add");
-        fs.writeFileSync(progressFn, JSON.stringify(progressData, null, 2));
+        fs.writeFileSync(progressFn, JSON.stringify(progressFileData, null, 2));
     }
     async function workerLoop(workerPage){
         while (true){
@@ -1373,9 +1363,6 @@ async function main(){
     await Promise.all(workerPages.map(p => workerLoop(p)));
 
     fs.writeFileSync(fn, JSON.stringify(data, null, 2));
-    if (cfg.fullParamsOutput){
-        fs.writeFileSync(cfg.fullParamsOutput, fullParamAcceptedUrls.join("\n") + (fullParamAcceptedUrls.length > 0 ? "\n" : ""), "utf8");
-    }
     console.log(`[PM] completed urls_in=${urls.length} added=${added} skip=${skipCount} resume_skip=${resumeSkipCount} afl_request_data=${fn}`);
 
     await browser.close();

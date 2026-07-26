@@ -90,11 +90,14 @@ def _alternate_config_path(path: str) -> Optional[str]:
     p = (path or "").strip()
     if not p:
         return None
+    folder = os.path.dirname(p)
     base = os.path.basename(p).lower()
     if base == "config.json":
-        return os.path.join(os.path.dirname(p), "symex_config.json")
+        return os.path.join(folder, "sieve_config.json")
+    if base == "sieve_config.json":
+        return os.path.join(folder, "symex_config.json")
     if base == "symex_config.json":
-        return os.path.join(os.path.dirname(p), "config.json")
+        return os.path.join(folder, "config.json")
     return None
 
 
@@ -113,13 +116,15 @@ def _resolve_symex_config_hint(base_dir: str, requested_path: Optional[str], arg
         folder = os.path.dirname(primary)
         base = os.path.basename(primary).lower()
         if folder:
-            if base in ("witcher_config.json", "request_data.json", "config.json", "symex_config.json"):
+            if base in ("witcher_config.json", "request_data.json", "config.json", "symex_config.json", "sieve_config.json"):
+                candidates.append(os.path.abspath(os.path.join(folder, "sieve_config.json")))
                 candidates.append(os.path.abspath(os.path.join(folder, "symex_config.json")))
             candidates.append(os.path.abspath(primary))
             alt = _alternate_config_path(primary)
             if alt:
                 candidates.append(os.path.abspath(alt))
     else:
+        candidates.append(os.path.abspath(os.path.join(base_dir, "sieve_config.json")))
         candidates.append(os.path.abspath(os.path.join(base_dir, "symex_config.json")))
     seen = set()
     ordered: List[str] = []
@@ -147,6 +152,7 @@ def _resolve_config_path(base_dir: str, requested_path: Optional[str]) -> str:
         if alt:
             candidates.append(os.path.abspath(alt))
     else:
+        candidates.append(os.path.abspath(os.path.join(base_dir, "sieve_config.json")))
         candidates.append(os.path.abspath(os.path.join(base_dir, "symex_config.json")))
         candidates.append(os.path.abspath(os.path.join(base_dir, "config.json")))
     seen = set()
