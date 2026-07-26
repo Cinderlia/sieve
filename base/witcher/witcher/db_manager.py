@@ -89,47 +89,47 @@ class DBBackupManager:
             pass
 
     def _load_db_config_from_file(self, path: str) -> DBQueryConfig:
-        self._emit("INFO", f"开始读取数据库配置: {path}")
+        self._emit("INFO", f"Starting to read database configuration: {path}")
         try:
             with open(path, "r", encoding="utf-8", errors="replace") as rf:
                 raw = json.load(rf)
         except FileNotFoundError:
-            self._emit("WARN", f"配置文件不存在: {path}")
+            self._emit("WARN", f"Configuration file does not exist: {path}")
             return DBQueryConfig(database="")
         except Exception as ex:
-            self._emit("ERROR", f"读取数据库配置失败: {path}: {ex}")
+            self._emit("ERROR", f"Failed to read database configuration: {path}: {ex}")
             raise
 
         if not isinstance(raw, dict):
-            self._emit("WARN", f"配置文件根节点不是对象，实际类型={type(raw).__name__}")
+            self._emit("WARN", f"The root node of the configuration file is not an object, actual type={type(raw).__name__}")
             return DBQueryConfig(database="")
 
         if "symbolic_db" not in raw:
-            self._emit("INFO", f"配置文件中不存在 symbolic_db 字段: {path}")
+            self._emit("INFO", f"The symbolic_db field does not exist in the configuration file: {path}")
             return DBQueryConfig(database="")
 
         sec = raw.get("symbolic_db")
         if not isinstance(sec, dict):
-            self._emit("WARN", f"symbolic_db 不是对象，实际类型={type(sec).__name__}")
+            self._emit("WARN", f"symbolic_db is not an object, actual type={type(sec).__name__}")
             return DBQueryConfig(database="")
 
         cfg = load_db_query_config_from_raw(raw)
         self._emit(
             "INFO",
-            "已解析 symbolic_db: "
+            "Parsed symbolic_db: "
             f"engine={cfg.engine}, host={cfg.host}, port={cfg.port}, "
             f"database={cfg.database or '<empty>'}, username={cfg.username}, "
             f"connect_timeout_sec={cfg.connect_timeout_sec}, query_timeout_sec={cfg.query_timeout_sec}, max_rows={cfg.max_rows}",
         )
         if not str(cfg.database or "").strip():
-            self._emit("WARN", "symbolic_db 已存在，但 database 为空")
+            self._emit("WARN", "symbolic_db exists, but database is empty")
         return cfg
 
     def _load_db_config(self) -> DBQueryConfig:
         cfg = self._load_db_config_from_file(self.symex_config_path)
         if str(cfg.database or "").strip() or str(cfg.engine or "").strip().lower() != "mysql":
             return cfg
-        self._emit("INFO", f"将回退检查 witcher_config.json: {self.config_path}")
+        self._emit("INFO", f"Falling back to check witcher_config.json: {self.config_path}")
         return self._load_db_config_from_file(self.config_path)
 
     def _load_record(self) -> Dict[str, Any]:
@@ -141,7 +141,7 @@ class DBBackupManager:
         except FileNotFoundError:
             return {}
         except Exception as ex:
-            self._emit("ERROR", f"读取数据库备份记录失败: {self.record_path}: {ex}")
+            self._emit("ERROR", f"Failed to read database backup record: {self.record_path}: {ex}")
         return {}
 
     def _write_record(self, backup_database: str) -> None:
@@ -160,7 +160,7 @@ class DBBackupManager:
     def _load_or_create_state(self) -> DBBackupState:
         db_name = str(self._cfg.database or "").strip()
         if not self._feature_enabled:
-            self._emit("INFO", "witcher_db_backup_enabled=false，跳过数据库备份/恢复")
+            self._emit("INFO", "witcher_db_backup_enabled=false, skipping database backup/restore")
             return DBBackupState(
                 enabled=False,
                 config_path=self.config_path,
@@ -170,7 +170,7 @@ class DBBackupManager:
             )
         engine = str(self._cfg.engine or "").strip().lower()
         if engine != "mysql":
-            self._emit("INFO", f"symbolic_db.engine={self._cfg.engine!r}，当前仅支持 mysql，跳过数据库备份/恢复")
+            self._emit("INFO", f"symbolic_db.engine={self._cfg.engine!r}, only mysql is currently supported, skipping database backup/restore")
             return DBBackupState(
                 enabled=False,
                 config_path=self.config_path,
@@ -179,7 +179,7 @@ class DBBackupManager:
                 backup_database="",
             )
         if not db_name:
-            self._emit("INFO", "symbolic_db 已解析，但 database 为空，跳过数据库备份/恢复")
+            self._emit("INFO", "symbolic_db was parsed, but database is empty, skipping database backup/restore")
             return DBBackupState(
                 enabled=False,
                 config_path=self.config_path,
@@ -193,7 +193,7 @@ class DBBackupManager:
         if backup_name:
             try:
                 if self.database_exists(backup_name):
-                    self._emit("INFO", f"复用现有备份库: {backup_name}")
+                    self._emit("INFO", f"Reusing existing backup database: {backup_name}")
                     return DBBackupState(
                         enabled=True,
                         config_path=self.config_path,
@@ -201,19 +201,19 @@ class DBBackupManager:
                         source_database=db_name,
                         backup_database=backup_name,
                     )
-                self._emit("WARN", f"备份记录存在，但备份库不存在: {backup_name}，将重新备份")
+                self._emit("WARN", f"A backup record exists, but the backup database does not exist: {backup_name}, a new backup will be created")
             except Exception as ex:
-                self._emit("WARN", f"检查备份库是否存在失败: {backup_name}: {ex}，将重新备份")
+                self._emit("WARN", f"Failed to check whether the backup database exists: {backup_name}: {ex}, a new backup will be created")
 
         if backup_name:
-            self._emit("WARN", f"备份记录存在，但无法复用: {backup_name}，将重新备份")
+            self._emit("WARN", f"A backup record exists, but it cannot be reused: {backup_name}, a new backup will be created")
         else:
-            self._emit("INFO", "未找到可复用的数据库备份记录，将创建新备份")
+            self._emit("INFO", "No reusable database backup record was found, a new backup will be created")
 
         backup_name = self._create_backup_database_name(db_name)
         self._clone_database(source_database=db_name, backup_database=backup_name)
         self._write_record(backup_name)
-        self._emit("INFO", f"已创建数据库备份: {db_name} -> {backup_name}")
+        self._emit("INFO", f"Created database backup: {db_name} -> {backup_name}")
         return DBBackupState(
             enabled=True,
             config_path=self.config_path,
@@ -373,13 +373,13 @@ class DBBackupManager:
         try:
             self._restore_from_backup_impl()
         except Exception as ex:
-            self._emit("ERROR", f"数据库恢复失败，已跳过本次恢复: {ex}")
+            self._emit("ERROR", f"Database restore failed, this restore was skipped: {ex}")
 
     def _restore_from_backup_impl(self) -> None:
         backup_db = self.state.backup_database
         source_db = self.state.source_database
         if not self.database_exists(backup_db):
-            self._emit("WARN", f"备份库不存在，重新创建备份: {backup_db}")
+            self._emit("WARN", f"Backup database does not exist, recreating backup: {backup_db}")
             backup_db = self._create_backup_database_name(source_db)
             self._clone_database(source_database=source_db, backup_database=backup_db)
             self._write_record(backup_db)
@@ -393,7 +393,7 @@ class DBBackupManager:
         self._reset_database_contents(source_db)
         self._clone_base_tables(backup_db, source_db)
         self._clone_views(backup_db, source_db)
-        self._emit("INFO", f"已从备份恢复数据库: {backup_db} -> {source_db}")
+        self._emit("INFO", f"Restored database from backup: {backup_db} -> {source_db}")
 
     def cleanup_backup(self) -> None:
         if not self.state.enabled:
@@ -402,17 +402,17 @@ class DBBackupManager:
         try:
             self._restore_from_backup_impl()
         except Exception as ex:
-            self._emit("ERROR", f"数据库恢复失败，继续执行清理: {ex}")
+            self._emit("ERROR", f"Database restore failed, continuing with cleanup: {ex}")
         try:
             self.drop_database(backup_db)
         except Exception as ex:
-            self._emit("ERROR", f"删除备份数据库失败: {backup_db}: {ex}")
+            self._emit("ERROR", f"Failed to delete backup database: {backup_db}: {ex}")
         try:
             if os.path.isfile(self.record_path):
                 os.remove(self.record_path)
         except Exception as ex:
-            self._emit("WARN", f"删除备份记录失败: {self.record_path}: {ex}")
-        self._emit("INFO", f"已删除备份数据库: {backup_db}")
+            self._emit("WARN", f"Failed to delete backup record: {self.record_path}: {ex}")
+        self._emit("INFO", f"Deleted backup database: {backup_db}")
 
     def cleanup_on_interrupt(self) -> None:
         if not self.state.enabled:
@@ -420,17 +420,17 @@ class DBBackupManager:
         try:
             self._restore_from_backup_impl()
         except Exception as ex:
-            self._emit("ERROR", f"中断时数据库恢复失败，继续执行清理: {ex}")
+            self._emit("ERROR", f"Database restore failed during interruption, continuing with cleanup: {ex}")
         try:
             self.drop_database(self.state.backup_database)
         except Exception as ex:
-            self._emit("ERROR", f"中断时删除备份数据库失败: {self.state.backup_database}: {ex}")
+            self._emit("ERROR", f"Failed to delete backup database during interruption: {self.state.backup_database}: {ex}")
         try:
             if os.path.isfile(self.record_path):
                 os.remove(self.record_path)
         except Exception as ex:
-            self._emit("WARN", f"删除备份记录失败: {self.record_path}: {ex}")
-        self._emit("INFO", f"已在中断时恢复并删除备份数据库: {self.state.backup_database}")
+            self._emit("WARN", f"Failed to delete backup record: {self.record_path}: {ex}")
+        self._emit("INFO", f"Restored and deleted backup database during interruption: {self.state.backup_database}")
 
     def drop_database(self, db_name: str) -> None:
         conn = self._connect(None)

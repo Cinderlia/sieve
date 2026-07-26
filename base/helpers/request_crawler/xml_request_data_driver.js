@@ -97,14 +97,14 @@ function selectBaseSite(config, parsedRequests) {
         }
     }
 
-    throw new Error("无法从 witcher_config.json 或 XML 请求中推断 base_url");
+    throw new Error("Unable to infer base_url from witcher_config.json or the XML requests");
 }
 
 
 function loadConfig(inputDir) {
     const configPath = path.join(inputDir, "witcher_config.json");
     if (!fs.existsSync(configPath)) {
-        throw new Error(`缺少配置文件: ${configPath}`);
+        throw new Error(`Missing configuration file: ${configPath}`);
     }
     return JSON.parse(fs.readFileSync(configPath, "utf8"));
 }
@@ -127,7 +127,7 @@ function parseRawHttpRequest(rawText, fallbackUrlText, baseSiteHref) {
     const requestLine = (lines.shift() || "").trim();
     const lineMatch = requestLine.match(/^([A-Z]+)\s+(\S+)(?:\s+HTTP\/[0-9.]+)?$/i);
     if (!lineMatch) {
-        throw new Error(`无法解析 HTTP 请求首行: ${requestLine}`);
+        throw new Error(`Failed to parse the HTTP request line: ${requestLine}`);
     }
 
     const method = String(lineMatch[1] || "GET").toUpperCase();
@@ -631,7 +631,7 @@ async function buildRequestDataFromXmlDir(inputDir, headless = true) {
     const config = loadConfig(inputDir);
     const xmlFiles = findXmlFiles(inputDir);
     if (xmlFiles.length === 0) {
-        throw new Error(`目录下没有找到 XML 文件: ${inputDir}`);
+        throw new Error(`No XML files were found in the directory: ${inputDir}`);
     }
 
     let parsedRequests = [];
@@ -640,7 +640,7 @@ async function buildRequestDataFromXmlDir(inputDir, headless = true) {
         parsedRequests = parsedRequests.concat(parseBurpXmlFile(xmlFile, baseHint));
     }
     if (parsedRequests.length === 0) {
-        throw new Error(`未从 XML 中解析到任何请求: ${inputDir}`);
+        throw new Error(`No requests could be parsed from the XML input: ${inputDir}`);
     }
 
     const baseSiteHref = selectBaseSite(config, parsedRequests);
@@ -701,7 +701,7 @@ function parseArgs(argv) {
     }
 
     if (!args.inputDir) {
-        throw new Error("用法: node xml_request_data_driver.js <输入目录> [--show-browser]");
+        throw new Error("Usage: node xml_request_data_driver.js <input_dir> [--show-browser]");
     }
 
     args.inputDir = path.resolve(args.inputDir);

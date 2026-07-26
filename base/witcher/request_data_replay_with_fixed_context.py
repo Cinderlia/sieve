@@ -29,7 +29,7 @@ def load_request_data(json_path):
     with open(json_path, "r", encoding="latin-1") as rf:
         data = json.load(rf)
     if not isinstance(data, dict):
-        raise ValueError("request_data.json 顶层必须是对象")
+        raise ValueError("request_data.json must be a JSON object at the top level")
 
     requests_found = data.get("requestsFound", {})
     seed_requests = data.get("seedRequestsFound", {})

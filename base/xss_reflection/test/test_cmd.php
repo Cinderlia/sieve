@@ -1,7 +1,7 @@
 <?php
 header("Content-Type: text/html");
 
-// 安全获取参数
+// Safely read parameters
 function p($name) {
     return isset($_GET[$name]) ? $_GET[$name] : '';
 }

@@ -46,7 +46,7 @@ def parse_input_file(path):
         if req is None:
             return
         if not req.get("SCRIPT_FILENAME"):
-            raise InputError("SCRIPT_FILENAME 不允许留空")
+            raise InputError("SCRIPT_FILENAME must not be empty")
         requests.append(req)
 
     with open(path, "r", encoding="utf-8") as rf:
@@ -58,7 +58,7 @@ def parse_input_file(path):
             if stripped.startswith("#"):
                 continue
             if ":" not in stripped:
-                raise InputError(f"第 {line_no} 行缺少 ':' 分隔符")
+                raise InputError(f"Missing ':' separator on line {line_no}")
             key, value = stripped.split(":", 1)
             key = normalize_key(key)
             value = value.strip()
@@ -92,7 +92,7 @@ def parse_input_file(path):
                 continue
 
             if current is None:
-                raise InputError(f"第 {line_no} 行出现在 SCRIPT_FILENAME 之前")
+                raise InputError(f"Line {line_no} appears before SCRIPT_FILENAME")
 
             if key == "GET":
                 current["GET"] = value
@@ -119,7 +119,7 @@ def parse_input_file(path):
             elif key == "FROM":
                 current["FROM"] = value
             else:
-                raise InputError(f"第 {line_no} 行未知字段 {key}")
+                raise InputError(f"Unknown field {key} on line {line_no}")
 
     finalize_request(current)
 
@@ -131,7 +131,7 @@ def ensure_absolute_url(script_filename, base_url):
     if parsed.scheme and parsed.netloc:
         return script_filename
     if not base_url:
-        raise InputError(f"SCRIPT_FILENAME={script_filename} 需要 BASE_URL")
+        raise InputError(f"SCRIPT_FILENAME={script_filename} requires BASE_URL")
     return urljoin(base_url.rstrip("/") + "/", script_filename.lstrip("/"))
 
 
@@ -153,7 +153,7 @@ def coerce_int(value, default):
     try:
         return int(value)
     except ValueError:
-        raise InputError(f"数值字段无法解析: {value}")
+        raise InputError(f"Failed to parse numeric field: {value}")
 
 
 def extract_inputset_from_requests(requests):

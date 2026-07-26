@@ -2318,7 +2318,7 @@ class Witcher():
                 pool_snapshot = 0.0
             max_allowed_time = float(dynamic_timeout or 0.0) + float(pool_snapshot or 0.0)
         else:
-            # 初始分配：1个seed给10%，但保底20%（防止AFL还没校准完就被杀），上限150%
+            # Initial allocation: 10% per seed, with a minimum of 20% and a maximum of 150%
             initial_ratio = min(max(0.1 * num_seeds, 0.2), 1.5)
             dynamic_timeout = base_time * initial_ratio
             check_interval = base_time * 0.1
@@ -2440,7 +2440,7 @@ class Witcher():
             try:
                 os.makedirs(self.work_dir, exist_ok=True)
                 with open(os.path.join(self.work_dir, "db_backup.log"), "a", encoding="utf-8", errors="replace") as wf:
-                    wf.write("[%s] [ERROR] 初始化数据库备份管理失败，已跳过数据库备份/恢复: %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(ex)))
+                    wf.write("[%s] [ERROR] Failed to initialize database backup management; database backup/restore was skipped: %s\n" % (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(ex)))
             except Exception:
                 pass
         fuzzer.start()

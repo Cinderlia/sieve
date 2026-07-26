@@ -1,10 +1,10 @@
 <?php
-// 获取所有参数（避免未定义 warning）
+// Safely read all parameters to avoid undefined warnings
 function g($k) {
     return isset($_GET[$k]) ? $_GET[$k] : "";
 }
 
-// 安全输出
+// Safe output escaping
 function h($k) {
     return htmlspecialchars(g($k), ENT_QUOTES, 'UTF-8');
 }

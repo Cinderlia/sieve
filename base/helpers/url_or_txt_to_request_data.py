@@ -143,7 +143,7 @@ def collect_entries_from_txt(txt_path):
 def collect_entries_from_single_url(raw_url):
     url = normalize_url(raw_url)
     if not url:
-        raise ValueError("无法解析输入 URL")
+        raise ValueError("Failed to parse the input URL")
     return [{
         "_url": url,
         "_method": "GET",
