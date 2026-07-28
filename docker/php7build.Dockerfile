@@ -1,7 +1,7 @@
 FROM witcher/basebuild as basebuild
 #FROM ubuntu:20.04
 
-MAINTAINER tricke
+MAINTAINER jmliang
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -56,6 +56,3 @@ RUN cd /php-trace && \
     ./configure --enable-opcode-tracer && \
     make && \
     make install
-
-#RUN echo "extension=opcode_tracer.so" > /etc/php/conf.d/opcode_tracer.ini
-RUN echo "extension=opcode_tracer.so" >> /usr/local/lib/php.ini
