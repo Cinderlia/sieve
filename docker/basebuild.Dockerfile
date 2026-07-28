@@ -44,3 +44,9 @@ RUN cd /wclibs && \
 
 COPY /Widash /Widash 
 RUN cd /Widash; ./autogen.sh && automake; bash ./x86-build.sh
+
+RUN git clone https://github.com/malteskoruppa/phpjoern.git /opt/phpjoern
+RUN apt-get update && apt-get install -y default-jre gradle && \
+    git clone https://github.com/octopus-platform/joern.git /joern && \
+    cd /joern && \
+    gradle build

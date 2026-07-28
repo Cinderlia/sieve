@@ -65,8 +65,8 @@ RUN sed -i 's/Indexes//g' /etc/apache2/apache2.conf && \
 # add index
 COPY config/000-default.conf /etc/apache2/sites-available/
 
-RUN printf '\nzend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20180731/xdebug.so\nxdebug.mode=coverage\nauto_prepend_file=/enable_cc.php\nextension=opcode_tracer.so\n\n' >> $(php -i |egrep "Loaded Configuration File.*php.ini"|cut -d ">" -f2|cut -d " " -f2)
-RUN for fn in $(find /etc/php/ . -name 'php.ini'); do printf '\nzend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20180731/xdebug.so\nxdebug.mode=coverage\nauto_prepend_file=/enable_cc.php\nextension=opcode_tracer.so\n\n' >> $fn; done
+RUN printf '\nzend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20180731/xdebug.so\nxdebug.mode=coverage\nauto_prepend_file=/enable_cc.php\nextension=opcode_tracer.so\nextension=ast.so\n\n' >> $(php -i |egrep "Loaded Configuration File.*php.ini"|cut -d ">" -f2|cut -d " " -f2)
+RUN for fn in $(find /etc/php/ . -name 'php.ini'); do printf '\nzend_extension=/usr/local/lib/php/extensions/no-debug-non-zts-20180731/xdebug.so\nxdebug.mode=coverage\nauto_prepend_file=/enable_cc.php\nextension=opcode_tracer.so\nextension=ast.so\n\n' >> $fn; done
 
 #RUN echo alias p='python -m witcher --affinity $(( $(ifconfig |egrep -oh "inet 172[\.0-9]+"|cut -d "." -f4) * 2 ))' >> /home/sv/.bashrc
 COPY config/py_aff.alias /root/py_aff.alias
@@ -79,3 +79,9 @@ COPY --from=witcher/basebuild /Widash/archbuilds/dash /bin/dash
 COPY --chown=sv:sv  config/codecov_conversion.py config/enable_cc.php /
 
 CMD /usr/bin/supervisord -c /etc/supervisord.conf
+
+COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20180731/
+COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
+
+COPY --from=hybridfuzzer/basebuild /opt/phpjoern /phpjoern
+COPY --from=hybridfuzzer/basebuild /opt/joern /joern

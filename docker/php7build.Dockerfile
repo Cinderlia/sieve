@@ -56,3 +56,12 @@ RUN cd /php-trace && \
     ./configure --enable-opcode-tracer && \
     make && \
     make install
+
+# Build php-ast extension
+RUN git clone https://github.com/nikic/php-ast /php-ast && \
+    cd /php-ast && \
+    git checkout 701e853 && \
+    phpize && \
+    ./configure && \
+    make && \
+    make install

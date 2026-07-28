@@ -27,7 +27,8 @@ RUN apt-get install -y sudo software-properties-common net-tools python3-pip \
                         # analysis
                         afl \
                         # web
-                        apache2 apache2-dev
+                        apache2 apache2-dev \
+                        default-jre
 
 RUN rm -rf /var/lib/mysql
 RUN  /usr/sbin/mysqld --initialize-insecure
@@ -137,4 +138,7 @@ RUN ln -s /usr/local/bin/supervisord /usr/bin/supervisord && ln -s /usr/local/bi
 CMD /netconf.sh && /usr/bin/supervisord -c /etc/supervisord.conf
 
 
-
+######### phpjoern and joern Setup
+COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ 2>/dev/null || \
+COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ 2>/dev/null || \
+COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
