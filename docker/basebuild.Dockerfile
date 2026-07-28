@@ -41,7 +41,3 @@ RUN cd /wclibs && \
     rm -f /wclibs/libcgiwrapper.so && \
     ln -s /wclibs/lib_db_fault_escalator.so /wclibs/libcgiwrapper.so && \
     ln -s /wclibs/lib_db_fault_escalator.so /lib/libcgiwrapper.so
-
-#COPY --from=puppeteer1337/build-widash-x86 /Widash/archbuilds/dash /crashing_dash
-COPY /Widash /Widash 
-RUN cd /Widash; ./autogen.sh && automake; bash ./x86-build.sh
