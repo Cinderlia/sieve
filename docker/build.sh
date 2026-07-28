@@ -3,7 +3,7 @@ set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-IMAGE_PREFIX="hybridfuzzer"
+IMAGE_PREFIX="sieve"
 PHP_VERSION="7"
 BUILD_ALL=false
 

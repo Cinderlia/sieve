@@ -1,14 +1,14 @@
 ##################################################################################################################################
-FROM witcher/baserun as php8run
+FROM sieve/baserun as php8run
 ##################################################################################################################################
 
-COPY --from=witcher/php8build /usr/local/bin/php /usr/local/bin/php-config /usr/local/bin/phpize /usr/local/bin/php-cgi /usr/local/bin/phar.phar /usr/local/bin/phpdbg /usr/local/bin/
-COPY --from=witcher/php8build /usr/local/lib/php/build/ /usr/local/lib/php/build/
+COPY --from=sieve/php8build /usr/local/bin/php /usr/local/bin/php-config /usr/local/bin/phpize /usr/local/bin/php-cgi /usr/local/bin/phar.phar /usr/local/bin/phpdbg /usr/local/bin/
+COPY --from=sieve/php8build /usr/local/lib/php/build/ /usr/local/lib/php/build/
 
-COPY --from=witcher/php8build /usr/local/include/php/ /usr/local/include/php/
-COPY --from=witcher/php8build /usr/local/bin/ /usr/local/bin/
-COPY --from=witcher/php8build /phpsrc/ext/xdebug /xdebug
-COPY --from=witcher/php8build /usr/lib/apache2/modules/libphp8.so /usr/lib/apache2/modules/libphp8.so
+COPY --from=sieve/php8build /usr/local/include/php/ /usr/local/include/php/
+COPY --from=sieve/php8build /usr/local/bin/ /usr/local/bin/
+COPY --from=sieve/php8build /phpsrc/ext/xdebug /xdebug
+COPY --from=sieve/php8build /usr/lib/apache2/modules/libphp8.so /usr/lib/apache2/modules/libphp8.so
 
 ######### apache, php, and crawler setup
 RUN apt-fast install -y libpng16-16 net-tools ca-certificates fonts-liberation libappindicator3-1 libasound2 \
@@ -72,14 +72,14 @@ RUN cat /root/py_aff.alias >> /home/sv/.bashrc
 
 #RUN cp /bin/dash /bin/saved_dash && cp /crashing_dash /bin/dash
 # there's a problem with building xdebug and the modifid dash, so copy after xdebug
-COPY --from=witcher/basebuild /Widash/archbuilds/dash /bin/dash
+COPY --from=sieve/basebuild /Widash/archbuilds/dash /bin/dash
 
 COPY --chown=sv:sv  config/codecov_conversion.py config/enable_cc.php /
 
 CMD /usr/bin/supervisord -c /etc/supervisord.conf
 
-COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/
-COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
+COPY --from=sieve/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/
+COPY --from=sieve/basebuild /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
 
-COPY --from=hybridfuzzer/basebuild /opt/phpjoern /phpjoern
-COPY --from=hybridfuzzer/basebuild /opt/joern /joern
+COPY --from=sieve/basebuild /opt/phpjoern /phpjoern
+COPY --from=sieve/basebuild /opt/joern /joern

@@ -102,7 +102,7 @@ RUN usermod -a -G www-data sv
 #
 
 #COPY --from=hacrs/build-httpreqr /Witcher/base/httpreqr/httpreqr /httpreqr
-COPY --from=witcher/basebuild /httpreqr/httpreqr.64 /httpreqr
+COPY --from=sieve/basebuild /httpreqr/httpreqr.64 /httpreqr
 
 COPY afl /afl
 ENV AFL_PATH=/afl
@@ -114,11 +114,11 @@ COPY --chown=sv:sv witcher /witcher/
 RUN . $NVM_DIR/nvm.sh && cd /helpers/request_crawler && npm install
 RUN su - sv -c "source /home/sv/.virtualenvs/witcher/bin/activate &&  pip install archr ipdb ply &&  cd /helpers/phuzzer && pip install -e . &&  cd /witcher && pip install -e ."
 
-COPY --from=witcher/basebuild /wclibs/lib_db_fault_escalator.so /lib/
+COPY --from=sieve/basebuild /wclibs/lib_db_fault_escalator.so /lib/
 RUN mkdir -p /wclibs && ln -s /lib/lib_db_fault_escalator.so /wclibs/ && ln -s /lib/lib_db_fault_escalator.so /wclibs/libcgiwrapper.so && ln -s /lib/lib_db_fault_escalator.so /lib/libcgiwrapper.so
 
 # copy x86_64 version of dash
-COPY --from=witcher/basebuild /Widash/archbuilds/dash /crashing_dash
+COPY --from=sieve/basebuild /Widash/archbuilds/dash /crashing_dash
 
 #COPY --chown=sv:sv bins /bins
 
@@ -136,9 +136,3 @@ RUN mkdir -p /test && chown sv:sv /test
 RUN ln -s /usr/local/bin/supervisord /usr/bin/supervisord && ln -s /usr/local/bin/pidproxy /usr/bin/pidproxy
 
 CMD /netconf.sh && /usr/bin/supervisord -c /etc/supervisord.conf
-
-
-######### phpjoern and joern Setup
-COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ 2>/dev/null || \
-COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ 2>/dev/null || \
-COPY --from=hybridfuzzer/basebuild /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/

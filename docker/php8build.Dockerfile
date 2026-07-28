@@ -1,4 +1,4 @@
-FROM witcher/basebuild as basebuild
+FROM sieve/basebuild as basebuild
 #FROM ubuntu:20.04
 
 MAINTAINER jmliang
