@@ -6,6 +6,34 @@ Witcher remains the foundation of the runtime and fuzzing pipeline, while Sieve 
 
 Sieve currently targets PHP 7 and 8, with future support for other languages.
 
+## License
+
+Sieve is distributed under a dual-license model:
+
+- The Witcher code is licensed under the BSD 3-Clause License. See [LICENSE.md](./LICENSE.md) for details.
+- Sieve-specific modifications and new components (including the symbolic execution engine, PHP 8 support, opcode tracer, and none request parameters) are licensed under the BSD 3-Clause License. See [LICENSE](./LICENSE) for details.
+
+## Installation
+
+We recommend using the provided Docker images to run Sieve.
+
+### Building the Docker Images
+
+Clone the repository and navigate to the docker directory:
+```bash
+git clone https://github.com/yourusername/sieve.git
+cd sieve/docker
+./build.sh
+```
+
+### Using the Docker Images
+
+Run the PHP 7 runtime container:
+```bash
+docker run -it --rm hybridfuzzer/php7run
+
+```
+
 ## Workflow Overview
 
 1. Start and prepare the target server inside the container.
