@@ -79,11 +79,3 @@ COPY --from=witcher/basebuild /Widash/archbuilds/dash /bin/dash
 COPY --chown=sv:sv  config/codecov_conversion.py config/enable_cc.php /
 
 CMD /usr/bin/supervisord -c /etc/supervisord.conf
-
-
-
-
-
-
-
-
