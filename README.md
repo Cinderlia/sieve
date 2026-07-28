@@ -30,7 +30,7 @@ cd sieve/docker
 
 Run the PHP 7 runtime container:
 ```bash
-docker run -it --rm hybridfuzzer/php7run
+docker run -it --rm sieve/php7run
 
 ```
 
