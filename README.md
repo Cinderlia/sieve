@@ -169,7 +169,7 @@ Place all three files under `AST/`:
 - `rels.csv`
 - `cpg_edges.csv`
 
-These three AST files are only for structural indexing and semantic reference.
+These three AST files furnish node metadata, structural relationships, and graph edges, collectively enabling structural indexing and semantic reference resolution.
 
 ## Configure Sieve / SymEx
 
