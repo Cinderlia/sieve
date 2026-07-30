@@ -169,6 +169,7 @@ Place all three files under `AST/`:
 - `rels.csv`
 - `cpg_edges.csv`
 
+These three AST files are only for structural indexing and semantic reference.
 
 ## Configure Sieve / SymEx
 

@@ -82,14 +82,3 @@ This document explains configuration items used by the initial URL discovery pip
 ### `crawler.mode_arg`
 - Default: `request_crawler`
 - Purpose: Mode argument passed to the crawler command.
-
-## File Role Summary
-
-### Required inter-process or downstream files
-- `initial_urls.txt`
-- `initial_urls.json`
-- `request_data.json`
-- `afl_request_data.json`
-
-### Resume state
-Param minimizer progress is now merged into `request_data.json` metadata instead of being stored in a separate progress file.

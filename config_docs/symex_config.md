@@ -17,8 +17,6 @@ The code accepts either `sieve_config.json` or `symex_config.json` and treats th
 
 ## Important Note About Defaults
 
-Like `witcher_config.json`, SymEx config does not have one single global JSON schema object in code. Defaults are applied per field by the consumers that read the file.
-
 ## Core Fields
 
 ### `symex_enabled`
@@ -152,24 +150,6 @@ Equivalent top-level fallbacks also exist:
 - `tmp_dir`
 - `test_dir`
 - `output_dir`
-
-## LLM Configuration Is Not Stored Here
-
-LLM settings come from:
-
-1. process environment variables,
-2. a `.env` file in the same directory as the resolved runtime config,
-3. built-in defaults.
-
-For convenience, the effective defaults are:
-
-- `BASE_URL`: `https://api.openai.com/v1`
-- `API_KEY`: empty
-- `MODEL`: `gpt-5.4-mini`
-- `TEMPERATURE`: `0.2`
-- `TIMEOUT_S`: `300`
-- `MAX_TOKENS`: `8192`
-- `MAX_RETRIES`: `3`
 
 ## Minimal Practical Config
 

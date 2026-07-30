@@ -51,16 +51,6 @@ This document explains configuration items used by Witcher itself.
 }
 ```
 
-## Important Note About Defaults
-
-Unlike `initial_url_config.json`, Witcher does not expose a single centralized default JSON object. Defaults are applied field-by-field inside the code.
-
-For each field below, this document states:
-
-- whether it is required,
-- the effective default if the code provides one,
-- and the purpose of the field.
-
 ## Core Fields
 
 ### `testname`
@@ -79,7 +69,7 @@ For each field below, this document states:
 - Purpose: Instrumented interpreter used by Witcher modes.
 
 ### `base_url`
-- Default: none at config level
+- Default: none
 - Purpose: Base URL of the target application.
 - Note: Used by several helper flows and expected by surrounding tooling even when not directly consumed everywhere in the main class.
 
@@ -95,7 +85,7 @@ For each field below, this document states:
 
 ### `timeout`
 - Default: none
-- Purpose: Global timeout for the full fuzzing session.
+- Purpose: The average timeout for a single fuzz testing session.
 - Note: Set this explicitly in the config when you want a stable campaign-wide timeout.
 
 ### `memory`
@@ -331,4 +321,3 @@ At minimum, a working `witcher_config.json` usually needs:
 - a usable `direct` login block or equivalent authenticated request setup
 - campaign settings such as `cores` and `timeout`
 
-If SymEx and DB-assisted features are used, also review [symex_config.md](file:///d:/files/witcher/Witcher-master/base/config_docs/symex_config.md).
