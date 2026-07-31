@@ -23,7 +23,7 @@ RUN    apt-get install -y build-essential  \
                         manpages-dev ninja-build capnproto  software-properties-common zip unzip pwgen \
                         libxss1 bison flex \
 			            gawk cvs ncurses-dev \
-                        default-jre gradle
+                        default-jre gradle swig
 
 COPY /httpreqr /httpreqr
 RUN cd /httpreqr && make 
@@ -42,4 +42,4 @@ RUN cd /Widash; ./autogen.sh && automake; bash ./x86-build.sh
 RUN git clone https://github.com/malteskoruppa/phpjoern.git /opt/phpjoern
 RUN git clone https://github.com/octopus-platform/joern.git /joern && \
     cd /joern && \
-    gradle build -x test
+    gradle build -x test -x joernTools
