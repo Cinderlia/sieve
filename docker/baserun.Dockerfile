@@ -1,5 +1,5 @@
 
-FROM ubuntu:bionic
+FROM sieve/basebuild
 
 
 # Use the fastest APT repo
@@ -8,18 +8,9 @@ RUN apt-get update --fix-missing
 
 ENV DEBIAN_FRONTEND noninteractive
 
-
-# Install apt-fast to speed things up
-RUN apt-get install -y aria2 curl wget virtualenvwrapper git
-
-#APT-FAST installation
-RUN /bin/bash -c "$(curl -sL https://git.io/vokNn) "
-
-RUN apt-fast update --fix-missing && apt-fast -y upgrade && apt-fast update
-
 # Install all APT packages
 
-RUN apt-get install -y sudo software-properties-common net-tools python3-pip \
+RUN apt-get install -y software-properties-common python3-pip \
                         # other stuff
                         mysql-server \
                         # editors
@@ -27,8 +18,7 @@ RUN apt-get install -y sudo software-properties-common net-tools python3-pip \
                         # analysis
                         afl \
                         # web
-                        apache2 apache2-dev \
-                        default-jre
+                        apache2 apache2-dev
 
 RUN rm -rf /var/lib/mysql
 RUN  /usr/sbin/mysqld --initialize-insecure
@@ -44,14 +34,14 @@ RUN echo "sv ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 RUN su - sv -c "source /usr/share/virtualenvwrapper/virtualenvwrapper.sh && mkvirtualenv -p `which python3` sieve"
 
 ######### Install phuzzer stuff
-RUN apt-fast install -y libxss1 bison
+RUN apt-get install -y libxss1 bison
 
 RUN su - sv -c "source /home/sv/.virtualenvs/sieve/bin/activate && pip install protobuf termcolor "
 
 RUN su - sv -c "source /home/sv/.virtualenvs/sieve/bin/activate && pip install git+https://github.com/Cinderlia/phuzzer.git"
 
 ######### last installs, b/c don't want to wait for phuzzer stuff again.
-RUN apt-fast install -y jq
+RUN apt-get install -y jq
 RUN wget https://github.com/sharkdp/bat/releases/download/v0.15.0/bat_0.15.0_amd64.deb -O /root/bat15.deb && sudo dpkg -i /root/bat15.deb
 
 
@@ -63,7 +53,7 @@ RUN git clone -q https://github.com/etrickel/docker_env.git && chown sv:sv -R . 
 COPY config/.bash_prompt /home/sv/.bash_prompt
 
 RUN echo 'source /usr/share/virtualenvwrapper/virtualenvwrapper.sh' >> /home/sv/.bashrc
-RUN echo 'workon witcher' >> /home/sv/.bashrc
+RUN echo 'workon sieve' >> /home/sv/.bashrc
 
 
 ######### NodeJS and NPM Setup
@@ -112,10 +102,10 @@ COPY --chown=sv:sv phuzzer /helpers/phuzzer
 COPY --chown=sv:sv witcher /witcher/
 
 RUN . $NVM_DIR/nvm.sh && cd /helpers/request_crawler && npm install
-RUN su - sv -c "source /home/sv/.virtualenvs/witcher/bin/activate &&  pip install archr ipdb ply &&  cd /helpers/phuzzer && pip install -e . &&  cd /witcher && pip install -e ."
+RUN su - sv -c "source /home/sv/.virtualenvs/sieve/bin/activate &&  pip install archr ipdb ply &&  cd /helpers/phuzzer && pip install -e . &&  cd /witcher && pip install -e ."
 
 COPY --from=sieve/basebuild /wclibs/lib_db_fault_escalator.so /lib/
-RUN mkdir -p /wclibs && ln -s /lib/lib_db_fault_escalator.so /wclibs/ && ln -s /lib/lib_db_fault_escalator.so /wclibs/libcgiwrapper.so && ln -s /lib/lib_db_fault_escalator.so /lib/libcgiwrapper.so
+RUN mkdir -p /wclibs && ln -sf /lib/lib_db_fault_escalator.so /wclibs/ && ln -sf /lib/lib_db_fault_escalator.so /wclibs/libcgiwrapper.so && ln -sf /lib/lib_db_fault_escalator.so /lib/libcgiwrapper.so
 
 # copy x86_64 version of dash
 COPY --from=sieve/basebuild /Widash/archbuilds/dash /crashing_dash
