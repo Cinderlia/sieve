@@ -1,7 +1,7 @@
 FROM sieve/basebuild as basebuild
 #FROM ubuntu:20.04
 
-MAINTAINER jmliang
+MAINTAINER Jiaming Liang
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -53,7 +53,7 @@ RUN cd /phpsrc && make install \
 COPY /php-trace /php-trace
 RUN cd /php-trace && \
     phpize && \
-    ./configure --enable-opcode-tracer && \
+    ./configure --enable-opcode-tracer CFLAGS="-Dbool=int -std=gnu99" && \
     make && \
     make install
 
