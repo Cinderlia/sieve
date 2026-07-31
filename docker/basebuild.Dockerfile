@@ -1,19 +1,13 @@
 
 FROM ubuntu:bionic
 
-# Use the fastest APT repo
-#COPY ./files/sources.list.with_mirrors /etc/apt/sources.list
 RUN dpkg --add-architecture i386 && apt-get update
 
 ENV DEBIAN_FRONTEND noninteractive
 
-
-# Install apt-fast to speed things up
 RUN apt-get update --fix-missing && apt-get install -y aria2 curl wget virtualenvwrapper git && \
-    #APT-FAST installation
-    /bin/bash -c "$(curl -sL https://git.io/vokNn) " && \
-    apt-fast update && apt-fast -y upgrade && apt-fast update --fix-missing
-RUN    apt-fast install -y build-essential  \
+    apt-get update && apt-get -y upgrade && apt-get update --fix-missing
+RUN    apt-get install -y build-essential  \
                         #Libraries
                         libxml2-dev libxslt1-dev libffi-dev cmake libreadline-dev \
                         libtool debootstrap debian-archive-keyring libglib2.0-dev libpixman-1-dev \

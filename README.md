@@ -22,7 +22,9 @@ We recommend using the provided Docker images to run Sieve.
 Clone the repository and navigate to the docker directory:
 ```bash
 git clone https://github.com/Cinderlia/sieve.git
-cd sieve/docker
+cd sieve
+git submodule update --init --recursive
+cd docker
 ./build.sh
 ```
 
