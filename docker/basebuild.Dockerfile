@@ -22,7 +22,8 @@ RUN    apt-get install -y build-essential  \
                         ccache make g++-multilib pkg-config coreutils rsyslog \
                         manpages-dev ninja-build capnproto  software-properties-common zip unzip pwgen \
                         libxss1 bison flex \
-			            gawk cvs ncurses-dev
+			            gawk cvs ncurses-dev \
+                        default-jre gradle
 
 COPY /httpreqr /httpreqr
 RUN cd /httpreqr && make 
@@ -39,7 +40,6 @@ COPY /Widash /Widash
 RUN cd /Widash; ./autogen.sh && automake; bash ./x86-build.sh
 
 RUN git clone https://github.com/malteskoruppa/phpjoern.git /opt/phpjoern
-RUN apt-get update && apt-get install -y default-jre gradle && \
-    git clone https://github.com/octopus-platform/joern.git /joern && \
+RUN git clone https://github.com/octopus-platform/joern.git /joern && \
     cd /joern && \
     gradle build -x test
