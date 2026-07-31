@@ -8,7 +8,7 @@ COPY --from=sieve/php8build /usr/local/lib/php/build/ /usr/local/lib/php/build/
 COPY --from=sieve/php8build /usr/local/include/php/ /usr/local/include/php/
 COPY --from=sieve/php8build /usr/local/bin/ /usr/local/bin/
 COPY --from=sieve/php8build /phpsrc/ext/xdebug /xdebug
-COPY --from=sieve/php8build /usr/lib/apache2/modules/libphp8.so /usr/lib/apache2/modules/libphp8.so
+COPY --from=sieve/php8build /usr/lib/apache2/modules/libphp.so /usr/lib/apache2/modules/libphp.so
 
 ######### apache, php, and crawler setup
 RUN apt-get install -y libpng16-16 net-tools ca-certificates fonts-liberation libappindicator3-1 libasound2 \

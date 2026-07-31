@@ -18,9 +18,19 @@ COPY repo /phpsrc
 COPY witcher-php-install/php-8.4-witcher.patch /phpsrc/witcher.patch
 COPY witcher-php-install/zend_witcher_trace.c witcher-php-install/zend_witcher_trace.h /phpsrc/Zend/
 
-RUN apt-get update && apt-get install -y apache2 apache2-dev
+RUN apt-get update && apt-get install -y apache2 apache2-dev libsqlite3-dev libonig-dev
 
-RUN cd /phpsrc && git apply ./witcher.patch && ./buildconf --force
+RUN cd /tmp && \
+    wget https://github.com/skvadrik/re2c/releases/download/2.2/re2c-2.2.tar.xz && \
+    tar -xf re2c-2.2.tar.xz && \
+    cd re2c-2.2 && \
+    ./configure && \
+    make && \
+    make install && \
+    cd / && \
+    rm -rf /tmp/re2c-2.2
+
+RUN cd /phpsrc && git apply ./witcher.patch && ln -sf ext/xdebug/m4 /phpsrc/m4 && ./buildconf --force
 
 RUN cd /phpsrc &&         \
         ./configure       \
@@ -58,7 +68,7 @@ RUN cd /php-trace && \
 # Build php-ast extension
 RUN git clone https://github.com/nikic/php-ast /php-ast && \
     cd /php-ast && \
-    git checkout 701e853 && \
+    git checkout master && \
     phpize && \
     ./configure && \
     make && \
