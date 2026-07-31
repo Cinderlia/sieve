@@ -1,6 +1,6 @@
 
 FROM ubuntu:bionic
-LABEL maintainer="maogx999@whu.edu.cn"
+
 
 # Use the fastest APT repo
 #COPY ./files/sources.list.with_mirrors /etc/apt/sources.list
