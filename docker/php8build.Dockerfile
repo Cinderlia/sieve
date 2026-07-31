@@ -1,7 +1,7 @@
 FROM sieve/basebuild as basebuild
 #FROM ubuntu:20.04
 
-MAINTAINER jmliang
+MAINTAINER Jiaming Liang
 
 ENV DEBIAN_FRONTEND noninteractive
 
