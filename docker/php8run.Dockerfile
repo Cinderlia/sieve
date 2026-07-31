@@ -78,8 +78,8 @@ COPY --chown=sv:sv  config/codecov_conversion.py config/enable_cc.php /
 
 CMD /usr/bin/supervisord -c /etc/supervisord.conf
 
-COPY --from=sieve/php7build /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/
-COPY --from=sieve/php7build /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
+COPY --from=sieve/php8build /usr/local/lib/php/extensions/no-debug-non-zts-20240924/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/
+COPY --from=sieve/php8build /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
 
 COPY --from=sieve/basebuild /opt/phpjoern /phpjoern
 COPY --from=sieve/basebuild /joern /joern
