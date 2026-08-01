@@ -83,4 +83,5 @@ COPY --from=sieve/php8build /usr/local/lib/php/extensions/no-debug-non-zts-20240
 COPY --from=sieve/php8build /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
 
 COPY --from=sieve/basebuild /opt/phpjoern /phpjoern
+RUN sed -i 's|PHP8=/usr/bin/php|PHP8=/usr/local/bin/php|' /phpjoern/php2ast
 COPY --from=sieve/basebuild /joern /joern

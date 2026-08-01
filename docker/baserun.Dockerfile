@@ -100,6 +100,7 @@ ENV AFL_PATH=/afl
 COPY --chown=sv:sv helpers/ /helpers/
 COPY --chown=sv:sv phuzzer /helpers/phuzzer
 COPY --chown=sv:sv witcher /witcher/
+COPY --chown=sv:sv xss_reflection /xss_reflection/
 
 RUN . $NVM_DIR/nvm.sh && cd /helpers/request_crawler && npm install
 RUN su - sv -c "source /home/sv/.virtualenvs/sieve/bin/activate &&  pip install archr ipdb ply &&  cd /helpers/phuzzer && pip install -e . &&  cd /witcher && pip install -e ."

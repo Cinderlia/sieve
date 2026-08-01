@@ -156,13 +156,13 @@ Create an `AST` directory inside the working directory, then generate AST data f
 Generate `nodes.csv` and `rels.csv`:
 
 ```bash
-~/phpjoern/php2ast -n nodes.csv -r rels.csv /app/dvwa
+/phpjoern/php2ast -n nodes.csv -r rels.csv /app/dvwa
 ```
 
 Generate `cpg_edges.csv`:
 
 ```bash
-~/joern/phpast2cpg nodes.csv rels.csv
+/joern/phpast2cpg nodes.csv rels.csv
 ```
 
 Place all three files under `AST/`:

@@ -84,4 +84,5 @@ COPY --from=sieve/php7build /usr/local/lib/php/extensions/no-debug-non-zts-20180
 COPY --from=sieve/php7build /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
 
 COPY --from=sieve/basebuild /opt/phpjoern /phpjoern
+RUN sed -i 's|PHP7=/usr/bin/php|PHP7=/usr/local/bin/php|' /phpjoern/php2ast
 COPY --from=sieve/basebuild /joern /joern
