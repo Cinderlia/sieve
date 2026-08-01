@@ -8,7 +8,9 @@ COPY --from=sieve/php7build /usr/local/lib/php/build/ /usr/local/lib/php/build/
 COPY --from=sieve/php7build /usr/local/include/php/ /usr/local/include/php/
 COPY --from=sieve/php7build /usr/local/bin/ /usr/local/bin/
 COPY --from=sieve/php7build /phpsrc/ext/xdebug /xdebug
+COPY --from=sieve/php7build /phpsrc/ /phpsrc/
 COPY --from=sieve/php7build /usr/lib/apache2/modules/libphp7.so /usr/lib/apache2/modules/libphp7.so
+COPY --from=sieve/php7build /usr/local/lib/php/extensions/no-debug-non-zts-20180731/opcode_tracer.so /usr/local/lib/php/extensions/no-debug-non-zts-20180731/opcode_tracer.so
 
 ######### apache, php, and crawler setup
 RUN apt-get install -y libpng16-16 net-tools ca-certificates fonts-liberation libappindicator3-1 libasound2 \

@@ -95,6 +95,7 @@ RUN usermod -a -G www-data sv
 COPY --from=sieve/basebuild /httpreqr/httpreqr.64 /httpreqr
 
 COPY afl /afl
+RUN cd /afl && make afl-fuzz
 ENV AFL_PATH=/afl
 
 COPY --chown=sv:sv helpers/ /helpers/
@@ -104,6 +105,9 @@ COPY --chown=sv:sv xss_reflection /xss_reflection/
 
 RUN . $NVM_DIR/nvm.sh && cd /helpers/request_crawler && npm install
 RUN su - sv -c "source /home/sv/.virtualenvs/sieve/bin/activate &&  pip install archr ipdb ply &&  cd /helpers/phuzzer && pip install -e . &&  cd /witcher && pip install -e ."
+
+RUN sed -i 's/from typing import Optional, Union, Literal/from typing import Optional, Union/g' /home/sv/.virtualenvs/sieve/lib/python3.6/site-packages/nclib/netcat.py && \
+    sed -i "s/Literal\['default'\]/str/g" /home/sv/.virtualenvs/sieve/lib/python3.6/site-packages/nclib/netcat.py
 
 COPY --from=sieve/basebuild /wclibs/lib_db_fault_escalator.so /lib/
 RUN mkdir -p /wclibs && ln -sf /lib/lib_db_fault_escalator.so /wclibs/ && ln -sf /lib/lib_db_fault_escalator.so /wclibs/libcgiwrapper.so && ln -sf /lib/lib_db_fault_escalator.so /lib/libcgiwrapper.so
