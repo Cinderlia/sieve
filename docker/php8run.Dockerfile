@@ -9,7 +9,7 @@ COPY --from=sieve/php8build /usr/local/include/php/ /usr/local/include/php/
 COPY --from=sieve/php8build /usr/local/bin/ /usr/local/bin/
 COPY --from=sieve/php8build /phpsrc/ext/xdebug /xdebug
 COPY --from=sieve/php8build /phpsrc/ /phpsrc/
-COPY --from=sieve/php8build /usr/lib/apache2/modules/libphp.so /usr/lib/apache2/modules/libphp.so
+COPY --from=sieve/php8build /usr/lib/apache2/modules/libphp.so /usr/lib/apache2/modules/libphp8.so
 COPY --from=sieve/php8build /usr/local/lib/php/extensions/no-debug-non-zts-20240924/opcode_tracer.so /usr/local/lib/php/extensions/no-debug-non-zts-20240924/opcode_tracer.so
 
 ######### apache, php, and crawler setup

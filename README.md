@@ -98,6 +98,7 @@ A full field-by-field reference is provided in [initial_url_config.md](./config_
 Run the following command to execute the modified initial URL pipeline. If the server does not provide a graphical environment, keep `--xvfb` enabled.
 
 ```bash
+su - sv
 python3 /helpers/initial_url/main.py http://127.0.0.1/dvwa/ ./ /app/dvwa/ --start-crawler --no-headless --timeout 4h --xvfb
 ```
 
@@ -202,6 +203,7 @@ MAX_RETRIES=3
 Start Witcher with:
 
 ```bash
+su - sv
 p --testver sieve
 ```
 
