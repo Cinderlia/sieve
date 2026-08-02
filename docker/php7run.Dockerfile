@@ -85,6 +85,6 @@ CMD /usr/bin/supervisord -c /etc/supervisord.conf
 COPY --from=sieve/php7build /usr/local/lib/php/extensions/no-debug-non-zts-20180731/ast.so /usr/local/lib/php/extensions/no-debug-non-zts-20180731/
 COPY --from=sieve/php7build /usr/local/lib/php/extensions/*/ast.so /usr/local/lib/php/extensions/
 
-COPY --from=sieve/basebuild /opt/phpjoern /phpjoern
+RUN git clone https://github.com/malteskoruppa/phpjoern.git /phpjoern
 RUN sed -i 's|PHP7=/usr/bin/php|PHP7=/usr/local/bin/php|' /phpjoern/php2ast
 COPY --from=sieve/basebuild /joern /joern

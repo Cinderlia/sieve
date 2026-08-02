@@ -41,7 +41,6 @@ RUN cd /Widash; ./autogen.sh && automake; bash ./x86-build.sh
 
 COPY /php-trace /php-trace
 
-RUN git clone https://github.com/malteskoruppa/phpjoern.git /opt/phpjoern
 RUN git clone https://github.com/octopus-platform/joern.git /joern && \
     cd /joern && \
     gradle build -x test -x joernTools

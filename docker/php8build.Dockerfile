@@ -45,6 +45,7 @@ RUN cd /phpsrc &&         \
 		\
 		--with-openssl      \
 		--with-pdo-mysql  \
+        --with-mysqli=mysqlnd \
 		--with-zlib       \
 	&& printf "\033[36m[Sieve] PHP $PHP_VER Configure completed \033[0m\n"
 
@@ -68,7 +69,7 @@ RUN cd /php-trace && \
 # Build php-ast extension
 RUN git clone https://github.com/nikic/php-ast /php-ast && \
     cd /php-ast && \
-    git checkout master && \
+    git checkout 64ea727 && \
     phpize && \
     ./configure && \
     make && \
