@@ -6,21 +6,18 @@ import os
 
 
 def parm_or_env(envname, argname, argdesc, parser, default=""):
-    if envname in os.environ:
-        parser.add_argument(f'--{argname}', help=argdesc, default=os.environ.get(envname))
+    env_default = os.environ.get(envname)
+    if default:
+        parser.add_argument(f'--{argname}', help=argdesc, default=env_default if env_default is not None else default)
     else:
-        if default:
-            print("adding default")
-            parser.add_argument(f'--{argname}', help=argdesc, default=default)
-        else:
-            parser.add_argument(argname, help=argdesc)
+        parser.add_argument(argname, help=argdesc, default=env_default if env_default is not None else None)
 
 
 def main():
 
     parser = argparse.ArgumentParser(description="Witcher fuzzer interface for web applications")
     parm_or_env("WC_TESTLOC", "testloc","the directory path with data about what's to be fuzzed ", parser, default=os.curdir)
-    parm_or_env("WC_TESTVER", "testver", "Shortcut abbreviation for which configuration to use.", parser, "WICHR")
+    parm_or_env("WC_TESTVER", "testver", "Shortcut abbreviation for which configuration to use.", parser, "SIEVE")
     parser.add_argument("--config", help="Name of config file for fuzzing session default is witcher_config.json",default="witcher_config.json")
     parser.add_argument("--appdir", help="Application root directory. If omitted, uses appdir from config file (fallback /app).", default=None)
     parser.add_argument("--no-run","--no_run", action="store_true", default=(os.environ.get("WC_NO_RUN", "0")!="0"))
