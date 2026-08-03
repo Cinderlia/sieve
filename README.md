@@ -174,6 +174,8 @@ Place all three files under `AST/`:
 
 These three AST files furnish node metadata, structural relationships, and graph edges, collectively enabling structural indexing and semantic reference resolution.
 
+The cpg_edges.csv is optional; Sieve can run normally without it. 
+
 ## Configure Sieve / SymEx
 
 Create `sieve_config.json` or `symex_config.json` in the working directory.

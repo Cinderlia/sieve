@@ -76,6 +76,10 @@ def collect_ast_csv(ast_dir: Path, out_ast_dir: Path) -> List[str]:
     copied = []
     for csv_path in sorted(ast_dir.glob("*.csv")):
         copied.append(str(csv_path))
+    cpg_edges_path = ast_dir / "cpg_edges.csv"
+    if not cpg_edges_path.exists():
+        cpg_edges_path.write_text("", encoding="utf-8")
+        copied.append(str(cpg_edges_path))
     return copied
 
 
