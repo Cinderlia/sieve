@@ -4,6 +4,8 @@ Sieve, formerly named SymEx, is a hybrid fuzzing tool built on top of Witcher. I
 
 Witcher remains the foundation of the runtime and fuzzing pipeline, while Sieve is the primary system in this repository and the main focus of this documentation.
 
+In addition, Sieve addresses several limitations of the original Witcher implementation and expands the parameter scope beyond GET, POST, and COOKIE to also include ENV, FILE, SQL, and SESSION parameters.
+
 Sieve currently targets PHP 7 and 8, with future support for other languages.
 
 ## License
@@ -206,7 +208,7 @@ Start Witcher with:
 
 ```bash
 su - sv
-p --testver sieve
+p --testver SIEVE
 ```
 
 Notes:
