@@ -193,19 +193,28 @@ def integrate_urls(url_lists: Iterable[List[str]]) -> List[str]:
     return out
 
 
+def _merge_config(defaults: dict, overrides: dict) -> dict:
+    merged = dict(defaults)
+    for key, value in overrides.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_config(merged.get(key) or {}, value)
+        else:
+            merged[key] = value
+    return merged
+
+
 def load_config(path: Path) -> dict:
+    defaults = default_config()
     if not path.exists():
-        return default_config()
+        return defaults
     try:
         with open(path, "r", encoding="utf-8") as rf:
             obj = json.load(rf)
             if isinstance(obj, dict):
-                merged = default_config()
-                merged.update(obj)
-                return merged
+                return _merge_config(defaults, obj)
     except Exception:
-        return default_config()
-    return default_config()
+        return defaults
+    return defaults
 
 
 def default_config() -> dict:
@@ -217,11 +226,11 @@ def default_config() -> dict:
             "accept_full_params_without_minimization": False,
         },
         "crawler": {
-            "start": False,
+            "start": True,
             "node_bin": "node",
             "no_headless": False,
             "xvfb": True,
-            "timeout": "4h",
+            "timeout": "",
             "mode_arg": "request_crawler"
         },
     }
@@ -260,8 +269,11 @@ def _start_request_crawler(base_url: str, base_appdir: str, crawler_cfg: dict) -
             use_xvfb = True
 
         timeout_value = ""
-        if isinstance(crawler_cfg, dict) and crawler_cfg.get("timeout"):
-            timeout_value = str(crawler_cfg.get("timeout") or "").strip()
+        if isinstance(crawler_cfg, dict):
+            raw_timeout = crawler_cfg.get("timeout")
+            timeout_text = str(raw_timeout or "").strip()
+            if timeout_text and timeout_text != "0":
+                timeout_value = timeout_text
 
         mode_arg = ""
         if isinstance(crawler_cfg, dict) and crawler_cfg.get("mode_arg"):

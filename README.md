@@ -78,10 +78,15 @@ Create a directory to store configuration files and generated artifacts.
 Typical files created or used in this directory include:
 
 - `witcher_config.json`
+- `sieve_config.json`
 - `initial_url_config.json`
 - `request_data.json`
 - `AST/`
 - fuzzing outputs produced by Witcher
+
+The initial_url_config.json is optional; Sieve can run normally without it while all settings will use their default values.
+
+Also, Sieve can run without sieve_config.json, but some features may not work as expected. We recommend at least filling in the symbolic_db section to ensure full functionality.
 
 ## Configure Witcher
 
@@ -91,8 +96,8 @@ A full field-by-field reference is provided in [witcher_config.md](./config_docs
 
 ## Configure Initial URL Discovery
 
-Create and edit `initial_url_config.json` in the working directory. The remaining options now control behavior only; output filenames are fixed and no longer user-configurable. Intermediate initial URL state and parameter data are stored in `initial_urls.json`.
-
+If you need, create and edit `initial_url_config.json` in the working directory. 
+For most use cases, we recommend sticking with the defaults.Specific settings can be overridden via command-line parameters when needed.
 A full field-by-field reference is provided in [initial_url_config.md](./config_docs/initial_url_config.md).
 
 ## Run the Modified Crawler
@@ -183,6 +188,8 @@ The cpg_edges.csv is optional; Sieve can run normally without it.
 Create `sieve_config.json` or `symex_config.json` in the working directory.
 
 The code treats these names as interchangeable and resolves either one as the active SymEx config.
+
+Sieve can run without this configuration file, but some features may not work as expected. We recommend at least filling in the symbolic_db section to ensure full functionality.
 
 A full field-by-field reference is provided in [symex_config.md](./config_docs/symex_config.md).
 

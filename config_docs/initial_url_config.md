@@ -2,6 +2,8 @@
 
 This document explains configuration items used by the initial URL discovery pipeline.
 
+Sieve can run without this configuration file—all settings will use their default values. For most use cases, we recommend sticking with the defaults.Specific settings can be overridden via command-line parameters when needed.
+
 ## Default Configuration
 
 ```json
@@ -13,11 +15,11 @@ This document explains configuration items used by the initial URL discovery pip
     "accept_full_params_without_minimization": false
   },
   "crawler": {
-    "start": false,
+    "start": true,
     "node_bin": "node",
     "no_headless": false,
     "xvfb": true,
-    "timeout": "4h",
+    "timeout": "",
     "mode_arg": "request_crawler"
   }
 }
@@ -56,7 +58,7 @@ This document explains configuration items used by the initial URL discovery pip
 ## `crawler`
 
 ### `crawler.start`
-- Default: `false`
+- Default: `true`
 - Purpose: Automatically starts the crawler after initial URL preparation.
 - CLI override: `--start-crawler`
 
@@ -75,10 +77,11 @@ This document explains configuration items used by the initial URL discovery pip
 - CLI override: `--xvfb`
 
 ### `crawler.timeout`
-- Default: `4h`
+- Default: ``
 - Purpose: Timeout string passed to the crawler helper.
 - CLI override: `--timeout`
 
 ### `crawler.mode_arg`
 - Default: `request_crawler`
 - Purpose: Mode argument passed to the crawler command.
+- Note: Currently, only `request_crawler` is supported.

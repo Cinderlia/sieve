@@ -6,11 +6,11 @@
     "accept_full_params_without_minimization": false
   },
   "crawler": {
-    "start": false,
+    "start": true,
     "node_bin": "node",
     "no_headless": false,
     "xvfb": true,
-    "timeout": "4h",
+    "timeout": "",
     "mode_arg": "request_crawler"
   }
 }

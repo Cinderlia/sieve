@@ -5,6 +5,49 @@ import sys
 from typing import Optional
 import pathlib
 
+
+def _read_json_dict(path: str) -> dict:
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            obj = json.load(f)
+    except Exception:
+        return {}
+    return obj if isinstance(obj, dict) else {}
+
+
+def _symex_enabled_from_configs(*, witcher_config_path: str) -> bool:
+    defaults = True
+    wcfg = _read_json_dict(witcher_config_path)
+    config_dir = os.path.dirname(os.path.abspath(witcher_config_path)) if witcher_config_path else ""
+    candidates = []
+    if config_dir:
+        candidates.append(os.path.join(config_dir, "sieve_config.json"))
+        candidates.append(os.path.join(config_dir, "symex_config.json"))
+    scfg = {}
+    for candidate in candidates:
+        scfg = _read_json_dict(candidate)
+        if scfg:
+            break
+
+    def parse_flag(raw: dict, key: str, fallback: bool) -> bool:
+        if not isinstance(raw, dict) or key not in raw:
+            return bool(fallback)
+        value = raw.get(key)
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            norm = value.strip().lower()
+            if norm in {"1", "true", "yes", "on"}:
+                return True
+            if norm in {"0", "false", "no", "off"}:
+                return False
+        return bool(fallback)
+
+    symex_value = parse_flag(scfg, "symex_enabled", defaults)
+    return parse_flag(wcfg, "symex_enabled", symex_value)
+
 class SymexHandle:
     def __init__(self, proc, log_fp, log_path, stop_flag_path, daemon_proc=None):
         self.proc = proc
@@ -17,21 +60,10 @@ class SymexHandle:
 def start_symex_hybrid(*, work_dir: str, config_path: str, request_data_path: str, trace_timeout: int = 30, enabled: bool = True) -> Optional[SymexHandle]:
     if not enabled:
         return None
+    if not _symex_enabled_from_configs(witcher_config_path=config_path):
+        return None
 
     symex_root = pathlib.Path(__file__).resolve().parents[1] / "symex"
-    symex_cfg_path = symex_root / "config.json"
-    if symex_cfg_path.exists():
-        try:
-            with open(symex_cfg_path, "r", encoding="utf-8", errors="replace") as f:
-                obj = json.load(f)
-            if isinstance(obj, dict):
-                v = obj.get("symex_enabled", True)
-                if isinstance(v, bool) and not v:
-                    return None
-                if isinstance(v, str) and v.strip().lower() in ("0", "false", "no", "off"):
-                    return None
-        except Exception:
-            pass
     symex_main = symex_root / "main.py"
     if not symex_main.exists():
         print(f"[WC] symex main not found at {symex_main}, skip starting symex")

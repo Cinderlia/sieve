@@ -33,6 +33,57 @@ from collections import Counter
 WITCH_FAIL = "[\033[31mWitcher\033[0m]"
 WITCH_GO = "[\033[32mWitcher\033[0m]"
 
+
+def _default_witcher_config() -> dict:
+    return {
+        "testname": "",
+        "afl_inst_interpreter_binary": "/phpsrc/sapi/cgi/php-cgi",
+        "wc_inst_interpreter_binary": "/phpsrc/sapi/cgi/php-cgi",
+        "base_url": "",
+        "afl_path": "/afl",
+        "ld_library_path": "/symlibs",
+        "afl_preload": "/symlibs/lib_db_fault_escalator.so",
+        "number_of_trials": 1,
+        "number_of_refuzzes": 1,
+        "enable_full_param_seed": False,
+        "timeout": 1200,
+        "first_crash": False,
+        "script_skip_list": [],
+        "script_random_order": 0,
+        "script_start_index": 0,
+        "cores": 1,
+        "appdir": "/app",
+        "run_timeout": 1200,
+        "memory": "8G",
+        "global_min_fuzz_time": 300,
+        "merge_seed_requests": False,
+        "max_initial_seeds": None,
+        "initial_params_json": "",
+        "server_cmd": None,
+        "server_base_port": 14000,
+        "server_env_vars": {},
+        "server_up_msg": "",
+        "binary_options": "",
+        "init_info_shm": None,
+        "war_path": None,
+        "symex_enabled": True,
+        "symex_trace_timeout": 30,
+        "witcher_db_backup_enabled": True,
+        "direct": {},
+        "request_crawler": {},
+    }
+
+
+def _merge_witcher_config(defaults: dict, overrides: dict) -> dict:
+    merged = dict(defaults)
+    for key, value in (overrides or {}).items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_witcher_config(merged.get(key) or {}, value)
+        else:
+            merged[key] = value
+    return merged
+
+
 class Witcher():
     AFLR, AFLHR, WICH, WICR, WICHR, EXWIC, EXWICH, EXWICHR, DEV, SIEVE = "AFLR", "AFLHR", "WICH", "WICR", "WICHR", "EXWIC", "EXWICH", "EXWICHR", "DEV", "SIEVE"
     CONFIGURATIONS = ["AFLR", "AFLHR", "WICH", "WICR", "WICHR", "EXWIC", "EXWICH", "EXWICHR", "DEV", "SIEVE"]
@@ -55,7 +106,8 @@ class Witcher():
         if not os.path.isfile(self.config_loc):
             raise ValueError(f"The configuration does not exist at {self.config_loc}, a configuration file is required")
 
-        self.jconfig = json.load(open(self.config_loc,"r"))
+        raw_config = json.load(open(self.config_loc,"r"))
+        self.jconfig = _merge_witcher_config(_default_witcher_config(), raw_config if isinstance(raw_config, dict) else {})
         if not self.appdir:
             self.appdir = self.jconfig.get("appdir") or self.jconfig.get("app_dir") or self.jconfig.get("app_root") or "/app"
         self.fuzzer_target_binary = ""

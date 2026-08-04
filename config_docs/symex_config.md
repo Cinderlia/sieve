@@ -2,6 +2,8 @@
 
 This document explains the shared configuration file used by the Sieve/SymEx subsystem.
 
+Sieve can run without this configuration file, but some features may not work as expected. We recommend at least filling in the symbolic_db section to ensure full functionality, other settings are best left at their default values.
+
 ## Name Resolution
 
 The code accepts either `sieve_config.json` or `symex_config.json` and treats them as interchangeable runtime config names. 
@@ -22,11 +24,12 @@ The code accepts either `sieve_config.json` or `symex_config.json` and treats th
 ### `symex_enabled`
 - Default: `true`
 - Purpose: Enables the SymEx subsystem.
-- Effect: Used by the Witcher-side SymEx launcher and by the example config.
+- Effect: Used by the Witcher-side SymEx launcher.
 
 ### `app_name`
 - Default: none / normalized empty when omitted
-- Purpose: Logical application name used by SymEx app configuration and related metadata.
+- Purpose: Name of target application.
+- Effect: For LLM reference, can also be left blank.
 
 ## Optional `symbolic_db` Block
 
@@ -65,7 +68,7 @@ If omitted, the code falls back to these defaults:
 
 ### `symbolic_db.database`
 - Default: empty string
-- Purpose: Database name.
+- Purpose: Database name used by target application.
 - Note: If empty, DB-assisted features are effectively disabled.
 
 ### `symbolic_db.username`
@@ -109,7 +112,7 @@ Example:
   "symbolic_seed_kinds": {
     "POST": true,
     "GET": true,
-    "COOKIE": false,
+    "COOKIE": true,
     "SESSION": true,
     "ENV": true,
     "SQL": true,
@@ -122,44 +125,3 @@ Each key:
 - Default: `true`
 - Purpose: Enables or disables symbolic seed generation/processing for that input kind.
 
-## Path-Related Behavior
-
-The app configuration loader also understands path settings from the same runtime config file.
-
-If present, these fields may be read:
-
-### `paths.input_dir`
-- Default: `input`
-- Purpose: Runtime input directory.
-
-### `paths.tmp_dir`
-- Default: `tmp`
-- Purpose: Runtime temporary directory.
-
-### `paths.test_dir`
-- Default: `test`
-- Purpose: Runtime test directory.
-
-### `paths.output_dir`
-- Default: `output`
-- Purpose: Runtime output directory.
-
-Equivalent top-level fallbacks also exist:
-
-- `input_dir`
-- `tmp_dir`
-- `test_dir`
-- `output_dir`
-
-## Minimal Practical Config
-
-A minimal usable config is:
-
-```json
-{
-  "symex_enabled": true,
-  "app_name": "your-app-name"
-}
-```
-
-Add `symbolic_db` only if you want DB-assisted symbolic querying or DB backup/restore support.

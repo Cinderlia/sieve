@@ -67,6 +67,43 @@ def _abspath(base_dir: str, p: str) -> str:
     return os.path.abspath(os.path.join(base_dir, v))
 
 
+def _default_symex_config() -> Dict[str, Any]:
+    return {
+        "symex_enabled": True,
+        "app_name": "",
+        "symbolic_db": {
+            "engine": "mysql",
+            "host": "127.0.0.1",
+            "port": 3306,
+            "database": "",
+            "username": "root",
+            "password": "",
+            "connect_timeout_sec": 3,
+            "query_timeout_sec": 5,
+            "max_rows": 50,
+        },
+        "symbolic_seed_kinds": {
+            "POST": True,
+            "GET": True,
+            "COOKIE": True,
+            "SESSION": True,
+            "ENV": True,
+            "SQL": True,
+            "FILE": True,
+        },
+    }
+
+
+def _merge_dict(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(base or {})
+    for key, value in (override or {}).items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _merge_dict(out.get(key) or {}, value)
+        else:
+            out[key] = value
+    return out
+
+
 def _read_json(path: str) -> Dict[str, Any]:
     if not path or not os.path.exists(path):
         return {}
@@ -75,7 +112,11 @@ def _read_json(path: str) -> Dict[str, Any]:
             obj = json.load(f)
     except Exception:
         return {}
-    return obj if isinstance(obj, dict) else {}
+    raw = obj if isinstance(obj, dict) else {}
+    base = os.path.basename(str(path or "")).lower()
+    if base in {"symex_config.json", "sieve_config.json"}:
+        return _merge_dict(_default_symex_config(), raw)
+    return raw
 
 
 def _normalize_app_name(value: Any) -> str:
@@ -296,6 +337,9 @@ def load_symbolic_seed_kind_flags(*, config_path: Optional[str] = None, argv: Op
                 out[key] = True
             elif norm in {"0", "false", "no", "off"}:
                 out[key] = False
+    symbolic_db = raw.get("symbolic_db") if isinstance(raw.get("symbolic_db"), dict) else {}
+    if not str(symbolic_db.get("database") or "").strip():
+        out["SQL"] = False
     return out
 
 

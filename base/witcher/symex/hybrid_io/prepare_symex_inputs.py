@@ -287,8 +287,14 @@ def prepare_inputs(config: str, work_dir: str, request_data: str = "") -> dict:
         raw_config = json.load(rf)
     if not isinstance(raw_config, dict):
         raise ValueError(f"invalid config json: {config_path}")
+    sieve_config_path = base_dir / "sieve_config.json"
     symex_config_path = base_dir / "symex_config.json"
-    runtime_config_source = symex_config_path if symex_config_path.is_file() else config_path
+    if sieve_config_path.is_file():
+        runtime_config_source = sieve_config_path
+    elif symex_config_path.is_file():
+        runtime_config_source = symex_config_path
+    else:
+        runtime_config_source = config_path
     ast_dir = base_dir / "AST"
     if not ast_dir.is_dir():
         raise FileNotFoundError(f"AST directory not found: {ast_dir}")

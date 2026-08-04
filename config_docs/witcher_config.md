@@ -7,8 +7,8 @@ This document explains configuration items used by Witcher itself.
 ```json
 {
   "testname": "unittests",
-  "afl_inst_interpreter_binary": "/bins/php7-cgi-mysqli-afl",
-  "wc_inst_interpreter_binary": "/bins/php7-cgi-mysqli-wc",
+  "afl_inst_interpreter_binary": "/phpsrc/sapi/cgi/php-cgi",
+  "wc_inst_interpreter_binary": "/phpsrc/sapi/cgi/php-cgi",
   "base_url": "http://localhost/",
   "afl_path": "/afl",
   "ld_library_path": "/wclibs",
@@ -16,10 +16,10 @@ This document explains configuration items used by Witcher itself.
   "number_of_trials": 1,
   "number_of_refuzzes": 3,
   "enable_full_param_seed": false,
-  "timeout": 30,
+  "timeout": 1200,
   "script_skip_list": [],
   "script_random_order": 1,
-  "cores": 3,
+  "cores": 1,
   "request_crawler": {
     "form_url": "http://localhost/interface/login/login.php?site=default",
     "usernameSelector": "#authUser",
@@ -40,11 +40,12 @@ This document explains configuration items used by Witcher itself.
     "url": "http://localhost/interface/main/main_screen.php",
     "postData": "new_login_session_management=1&authProvider=TroubleMaker&authUser=admin&clearPass=password&languageChoice=1",
     "getData": "auth=login&site=default",
-    "positiveHeaders": [{"Location": "/interface/main/tabs/main.php"}],
+    "pre_login": "/app/interface/main/main_screen.php",
+    "positiveHeaders": {"Location": "/interface/main/tabs/main.php"},
     "positiveBody": "",
     "method": "POST",
-    "cgiBinary": "/php/php-cgi-mysqli-wc",
-    "loginSessionCookie": "OpenEMR",
+    "cgiBinary": "/phpsrc/sapi/cgi/php-cgi",
+    "loginSessionCookie": "PHPSESSID",
     "mandatoryGet": "",
     "extra_authorized_requests": [{"url": "http://localhost/interface/patient_file/summary/demographics.php?set_pid=2"}]
   }
@@ -59,14 +60,16 @@ This document explains configuration items used by Witcher itself.
 - Purpose: Used to name the report directory.
 
 ### `afl_inst_interpreter_binary`
-- Default: none
+- Default: `/phpsrc/sapi/cgi/php-cgi`
 - Required for `AFLR` / `AFLHR`
 - Purpose: Instrumented AFL interpreter used for AFL-only modes.
+- Note: The default values should suffice unless the php-cgi binary has been relocated or a custom-compiled version is being used.
 
 ### `wc_inst_interpreter_binary`
-- Default: none
-- Required for Witcher-instrumented modes such as `WIC*` and `EX*`
+- Default: `/phpsrc/sapi/cgi/php-cgi`
+- Required for Witcher-instrumented modes.
 - Purpose: Instrumented interpreter used by Witcher modes.
+- Note: The default values should suffice unless the php-cgi binary has been relocated or a custom-compiled version is being used.
 
 ### `base_url`
 - Default: none
@@ -77,24 +80,21 @@ This document explains configuration items used by Witcher itself.
 - Default: `/app`
 - Purpose: Application root directory.
 - Resolution order: `appdir`, then `app_dir`, then `app_root`, then `/app`.
+- Note: The default values should suffice unless the application root directory has been relocated.
+
 
 ### `cores`
-- Default: none
+- Default: 1
 - Purpose: Number of fuzzing cores/workers.
 - Note: Set this explicitly in the config when you want deterministic worker allocation.
 
 ### `timeout`
-- Default: none
+- Default: 1200
 - Purpose: The average timeout for a single fuzz testing session.
 - Note: Set this explicitly in the config when you want a stable campaign-wide timeout.
 
-### `memory`
-- Default: none
-- Purpose: AFL memory limit.
-- Note: Set this explicitly in the config when you want a stable memory budget for fuzzing.
-
 ### `first_crash`
-- Default: CLI flag default `false`
+- Default: `false`
 - Purpose: Stop after the first crash instead of running until full timeout.
 
 ## AFL / Runtime Environment
@@ -104,12 +104,14 @@ This document explains configuration items used by Witcher itself.
 - Purpose: Exported to `AFL_PATH`.
 
 ### `ld_library_path`
-- Default: empty string when omitted
-- Purpose: Exported to `LD_LIBRARY_PATH` for the target runtime.
+- Default: `/symlibs`
+- Purpose: Used for vulnerability detection.
+- Note: we recommend keeping the default values.
 
 ### `afl_preload`
-- Default: empty string when omitted
-- Purpose: Exported to `AFL_PRELOAD`.
+- Default: `/symlibs/lib_db_fault_escalator.so`
+- Purpose: Used for vulnerability detection.
+- Note: we recommend keeping the default values.
 
 ### `run_timeout_ms`
 - Default: no explicit JSON default
@@ -117,12 +119,8 @@ This document explains configuration items used by Witcher itself.
 - Precedence: Preferred over `run_timeout`.
 
 ### `run_timeout`
-- Default: `200`
+- Default: `1200`
 - Purpose: Backward-compatible per-execution timeout in milliseconds when `run_timeout_ms` is absent.
-
-### `use_qemu`
-- Default: none / falsy when omitted
-- Purpose: Enables QEMU-backed execution in the Phuzzer layer.
 
 ## Campaign Control
 
