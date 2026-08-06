@@ -79,7 +79,7 @@ Typical files created or used in this directory include:
 - `AST/`
 - fuzzing outputs produced by Witcher
 
-The initial_url_config.json is optional; Sieve can run without it.
+We have provided example configuration files in the Docker image.
 
 ## Configure Witcher
 
