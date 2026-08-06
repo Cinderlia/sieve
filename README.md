@@ -1,7 +1,7 @@
 # Sieve
 
 Sieve is a hybrid fuzzing tool built on top of Witcher. 
-It currently targets PHP 7 and 8.
+It currently supports PHP 7 and 8.
 
 ## License
 
