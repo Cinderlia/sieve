@@ -1,6 +1,6 @@
 # Sieve
 
-Sieve is a hybrid fuzzing tool built on top of Witcher. 
+Sieve (or Symex) is a hybrid fuzzing tool built on top of Witcher. 
 It currently supports PHP 7 and 8.
 
 ## License
