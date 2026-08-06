@@ -3,12 +3,6 @@
 Sieve (or Symex) is a hybrid fuzzing tool built on top of Witcher. 
 It currently supports PHP 7 and 8.
 
-## License
-
-Sieve is distributed under a dual-license model:
-
-- The Witcher code is licensed under the BSD 3-Clause License. See [LICENSE.md](./LICENSE.md) for details.
-- Sieve-specific modifications and new components (including the symbolic execution engine, PHP 8 support, opcode tracer, and none request parameters) are licensed under the BSD 3-Clause License. See [LICENSE](./LICENSE) for details.
 
 ## Installation
 
