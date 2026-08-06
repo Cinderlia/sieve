@@ -89,8 +89,8 @@ A full field-by-field reference is provided in [witcher_config.md](./config_docs
 
 ## Configure Initial URL Discovery
 
-If you need, create and edit `initial_url_config.json` in the working directory. 
-For most use cases, we recommend sticking with the defaults. Specific settings can be overridden via command-line parameters when needed.
+Create and edit `initial_url_config.json` in the working directory. 
+For most use cases, we recommend sticking with the defaults. 
 A full field-by-field reference is provided in [initial_url_config.md](./config_docs/initial_url_config.md).
 
 ## Run the Modified Crawler
