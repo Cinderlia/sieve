@@ -33,8 +33,8 @@ def _append_prompt_stage_debug(base_inputs: Optional[Dict[str, Any]], event: str
     try:
         logs_dir = os.path.join(os.path.abspath(run_dir), "logs")
         os.makedirs(logs_dir, exist_ok=True)
-        with open(os.path.join(logs_dir, "stage_debug.ndjson"), "a", encoding="utf-8", errors="replace") as f:
-            f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+        # with open(os.path.join(logs_dir, "stage_debug.ndjson"), "a", encoding="utf-8", errors="replace") as f:
+        #     f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
     except Exception:
         pass
 

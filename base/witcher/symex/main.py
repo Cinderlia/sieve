@@ -358,8 +358,8 @@ def _daemon_log(runtime_root: str, msg: str) -> None:
         path = os.path.join(meta_dir, "daemon.log")
         ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         line = "[%s] %s\n" % (ts, str(msg))
-        with open(path, "a+", encoding="utf-8") as f:
-            f.write(line)
+        # with open(path, "a+", encoding="utf-8") as f:
+        #     f.write(line)
     except Exception:
         return
 

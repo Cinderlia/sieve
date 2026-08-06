@@ -35,8 +35,8 @@ def _append_symbolic_stage_debug(run_dir: str, event: str, **fields) -> None:
         }
         for k, v in (fields or {}).items():
             payload[str(k)] = v
-        with open(os.path.join(logs_dir, "stage_debug.ndjson"), "a", encoding="utf-8", errors="replace") as f:
-            f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+        # with open(os.path.join(logs_dir, "stage_debug.ndjson"), "a", encoding="utf-8", errors="replace") as f:
+        #     f.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
     except Exception:
         pass
 
@@ -969,16 +969,16 @@ def write_symbolic_db_request_artifacts(
     _ensure_dir(resp_dir)
     raw_path = os.path.join(resp_dir, f"symbolic_response_{int(seq)}_llm_raw.txt")
     json_path = os.path.join(resp_dir, f"symbolic_response_{int(seq)}_db_request.json")
-    _write_text(raw_path, text)
+    # _write_text(raw_path, text)
     payload = {
         "db_request": dict(db_request or {}),
         "raw_response_text": str(text or ""),
     }
-    try:
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-    except Exception:
-        _write_text(json_path, "{\n  \"db_request\": {}\n}\n")
+    # try:
+    #     with open(json_path, "w", encoding="utf-8") as f:
+    #         json.dump(payload, f, ensure_ascii=False, indent=2)
+    # except Exception:
+    #     _write_text(json_path, "{\n  \"db_request\": {}\n}\n")
     return raw_path, json_path
 
 

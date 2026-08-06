@@ -92,8 +92,8 @@ def _append_json_line(path: str, obj: dict) -> None:
         txt = json.dumps(obj or {}, ensure_ascii=False, sort_keys=True)
     except Exception:
         txt = "{}"
-    with open(out_path, "a", encoding="utf-8", errors="replace") as f:
-        f.write(txt + "\n")
+    # with open(out_path, "a", encoding="utf-8", errors="replace") as f:
+    #     f.write(txt + "\n")
 
 
 def _append_stage_debug(run_dir: str, event: str, **fields) -> None:
