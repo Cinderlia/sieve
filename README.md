@@ -140,7 +140,7 @@ python3 /helpers/initial_url/main.py http://127.0.0.1/dvwa/ ./ /app/dvwa/ --star
   - Timeout passed to the crawler command.
   - Overrides `crawler.timeout`.
 
-### What the Initial URL Pipeline Produces
+### Expected results of crawling
 
 The pipeline now keeps only the required files:
 
@@ -175,7 +175,6 @@ Place all three files under `AST/`:
 ## Configure Sieve / SymEx
 
 Create `sieve_config.json` or `symex_config.json` in the working directory.
-
 The code treats these names as interchangeable and resolves either one as the active SymEx config.
 
 Sieve can run without this configuration file, but some features may not work as expected. We recommend at least filling in the symbolic_db section to ensure full functionality.
