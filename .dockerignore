@@ -1,5 +1,2 @@
-java/jdksrc*
-ruby/rubysrc*
-php5/phpsrc*
+php8/phpsrc*
 php7/phpsrc*
-dotnet/dotnetsrc*
