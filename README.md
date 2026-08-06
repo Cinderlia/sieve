@@ -1,12 +1,7 @@
 # Sieve
 
-Sieve, formerly named SymEx, is a hybrid fuzzing tool built on top of Witcher. It extends and improves the original Witcher workflow and adds a symbolic-execution component to support tighter cooperation between fuzzing and program analysis.
-
-Witcher remains the foundation of the runtime and fuzzing pipeline, while Sieve is the primary system in this repository and the main focus of this documentation.
-
-In addition, Sieve addresses several limitations of the original Witcher implementation and expands the parameter scope beyond GET, POST, and COOKIE to also include ENV, FILE, SQL, and SESSION parameters.
-
-Sieve currently targets PHP 7 and 8, with future support for other languages.
+Sieve is a hybrid fuzzing tool built on top of Witcher. 
+It currently targets PHP 7 and 8.
 
 ## License
 
@@ -38,7 +33,7 @@ docker run -it --rm sieve/php7run
 
 ```
 
-## Workflow Overview
+## Overview
 
 1. Start and prepare the target server inside the container.
 2. Create a working directory for config files and generated artifacts.
@@ -84,9 +79,7 @@ Typical files created or used in this directory include:
 - `AST/`
 - fuzzing outputs produced by Witcher
 
-The initial_url_config.json is optional; Sieve can run normally without it while all settings will use their default values.
-
-Also, Sieve can run without sieve_config.json, but some features may not work as expected. We recommend at least filling in the symbolic_db section to ensure full functionality.
+The initial_url_config.json is optional; Sieve can run without it.
 
 ## Configure Witcher
 
@@ -97,7 +90,7 @@ A full field-by-field reference is provided in [witcher_config.md](./config_docs
 ## Configure Initial URL Discovery
 
 If you need, create and edit `initial_url_config.json` in the working directory. 
-For most use cases, we recommend sticking with the defaults.Specific settings can be overridden via command-line parameters when needed.
+For most use cases, we recommend sticking with the defaults. Specific settings can be overridden via command-line parameters when needed.
 A full field-by-field reference is provided in [initial_url_config.md](./config_docs/initial_url_config.md).
 
 ## Run the Modified Crawler
@@ -178,10 +171,6 @@ Place all three files under `AST/`:
 - `nodes.csv`
 - `rels.csv`
 - `cpg_edges.csv`
-
-These three AST files furnish node metadata, structural relationships, and graph edges, collectively enabling structural indexing and semantic reference resolution.
-
-The cpg_edges.csv is optional; Sieve can run normally without it. 
 
 ## Configure Sieve / SymEx
 
