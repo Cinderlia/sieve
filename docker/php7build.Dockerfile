@@ -1,8 +1,6 @@
 FROM sieve/basebuild as basebuild
 #FROM ubuntu:20.04
 
-MAINTAINER Jiaming Liang
-
 ENV DEBIAN_FRONTEND noninteractive
 
 ARG ARG_PHP_VER=7
